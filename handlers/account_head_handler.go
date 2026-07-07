@@ -10,7 +10,7 @@ import (
 
 func ListAccountHeads(c *fiber.Ctx, db *gorm.DB) error {
 	var heads []models.AccountHead
-	tx := db
+	tx := db.Model(&models.AccountHead{})
 	if acctType := c.Query("type"); acctType != "" {
 		tx = tx.Where("type = ?", acctType)
 	}

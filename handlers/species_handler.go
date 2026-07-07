@@ -10,7 +10,7 @@ import (
 
 func ListSpecies(c *fiber.Ctx, db *gorm.DB) error {
 	var species []models.Species
-	tx := db.Preload("Breeds")
+	tx := db.Model(&models.Species{}).Preload("Breeds")
 	return paginate(c, tx, &species)
 }
 

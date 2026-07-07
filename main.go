@@ -24,8 +24,8 @@ func main() {
 
 	routes.Setup(app, cfg)
 
-	// Seed initial admin user if not exists
 	seedAdmin(cfg)
+	database.Seed()
 
 	log.Printf("Server starting on %s", cfg.AppPort)
 	log.Fatal(app.Listen(cfg.AppPort))

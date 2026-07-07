@@ -10,7 +10,7 @@ import (
 
 func ListInventoryCategories(c *fiber.Ctx, db *gorm.DB) error {
 	var categories []models.InventoryCategory
-	tx := db.Preload("Items")
+	tx := db.Model(&models.InventoryCategory{}).Preload("Items")
 	return paginate(c, tx, &categories)
 }
 

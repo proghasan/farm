@@ -10,7 +10,7 @@ import (
 
 func ListAccountTransactions(c *fiber.Ctx, db *gorm.DB) error {
 	var txns []models.AccountTransaction
-	tx := db.Preload("AccountHead")
+	tx := db.Model(&models.AccountTransaction{}).Preload("AccountHead")
 	if headID := c.Query("account_head_id"); headID != "" {
 		tx = tx.Where("account_head_id = ?", headID)
 	}

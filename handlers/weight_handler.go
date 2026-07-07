@@ -10,7 +10,7 @@ import (
 
 func ListWeightHistories(c *fiber.Ctx, db *gorm.DB) error {
 	var weights []models.AnimalWeightHistory
-	tx := db.Preload("Animal")
+	tx := db.Model(&models.AnimalWeightHistory{}).Preload("Animal")
 	if animalID := c.Query("animal_id"); animalID != "" {
 		tx = tx.Where("animal_id = ?", animalID)
 	}

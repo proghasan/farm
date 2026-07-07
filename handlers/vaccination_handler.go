@@ -10,7 +10,7 @@ import (
 
 func ListVaccinations(c *fiber.Ctx, db *gorm.DB) error {
 	var vaccinations []models.AnimalVaccination
-	tx := db.Preload("Animal").Preload("Vaccine")
+	tx := db.Model(&models.AnimalVaccination{}).Preload("Animal").Preload("Vaccine")
 	if animalID := c.Query("animal_id"); animalID != "" {
 		tx = tx.Where("animal_id = ?", animalID)
 	}

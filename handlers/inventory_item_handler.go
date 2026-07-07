@@ -10,7 +10,7 @@ import (
 
 func ListInventoryItems(c *fiber.Ctx, db *gorm.DB) error {
 	var items []models.InventoryItem
-	tx := db.Preload("Category")
+	tx := db.Model(&models.InventoryItem{}).Preload("Category")
 	if categoryID := c.Query("category_id"); categoryID != "" {
 		tx = tx.Where("category_id = ?", categoryID)
 	}

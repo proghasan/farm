@@ -10,7 +10,7 @@ import (
 
 func ListBreeds(c *fiber.Ctx, db *gorm.DB) error {
 	var breeds []models.Breed
-	tx := db.Preload("Species")
+	tx := db.Model(&models.Breed{}).Preload("Species")
 	if speciesID := c.Query("species_id"); speciesID != "" {
 		tx = tx.Where("species_id = ?", speciesID)
 	}

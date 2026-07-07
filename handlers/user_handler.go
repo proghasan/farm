@@ -30,7 +30,7 @@ type UpdateUserRequest struct {
 
 func ListUsers(c *fiber.Ctx, db *gorm.DB) error {
 	var users []models.User
-	tx := db.Select("id, name, email, phone, username, role, status, created_at, updated_at")
+	tx := db.Model(&models.User{}).Select("id, name, email, phone, username, role, status, created_at, updated_at")
 	return paginate(c, tx, &users)
 }
 
