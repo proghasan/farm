@@ -4,8 +4,8 @@ import "time"
 
 type Breed struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
-	SpeciesID uint      `gorm:"not null" json:"species_id"`
-	Name      string    `gorm:"size:150;not null" json:"name"`
+	SpeciesID uint      `gorm:"not null" json:"species_id" validate:"required"`
+	Name      string    `gorm:"size:150;not null" json:"name" validate:"required,min=1,max=150"`
 	CreatedBy uint      `gorm:"not null;default:0" json:"created_by"`
 	UpdatedBy uint      `gorm:"not null;default:0" json:"updated_by"`
 	CreatedAt time.Time `json:"created_at"`

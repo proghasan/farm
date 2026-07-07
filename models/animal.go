@@ -8,11 +8,11 @@ import (
 
 type Animal struct {
 	ID            uint           `gorm:"primaryKey" json:"id"`
-	TagNo         string         `gorm:"size:50;not null;unique" json:"tag_no"`
+	TagNo         string         `gorm:"size:50;not null;unique" json:"tag_no" validate:"required,min=1,max=50"`
 	Name          *string        `gorm:"size:150" json:"name,omitempty"`
-	SpeciesID     uint           `gorm:"not null" json:"species_id"`
+	SpeciesID     uint           `gorm:"not null" json:"species_id" validate:"required"`
 	BreedID       *uint          `json:"breed_id,omitempty"`
-	Gender        string         `gorm:"size:10;not null" json:"gender"`
+	Gender        string         `gorm:"size:10;not null" json:"gender" validate:"required,oneof=Male Female"`
 	BirthDate     *string        `json:"birth_date,omitempty"`
 	PurchaseDate  *string        `json:"purchase_date,omitempty"`
 	PurchasePrice float64        `gorm:"type:decimal(12,2);default:0" json:"purchase_price"`

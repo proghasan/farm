@@ -10,12 +10,12 @@ import (
 )
 
 type CreateUserRequest struct {
-	Name     string  `json:"name"`
-	Email    *string `json:"email"`
+	Name     string  `json:"name" validate:"required,min=1,max=150"`
+	Email    *string `json:"email" validate:"omitempty,email"`
 	Phone    *string `json:"phone"`
 	Username *string `json:"username"`
-	Password string  `json:"password"`
-	Role     string  `json:"role"`
+	Password string  `json:"password" validate:"required,min=6"`
+	Role     string  `json:"role" validate:"omitempty,oneof=Owner Manager Veterinarian Worker Accountant"`
 }
 
 type UpdateUserRequest struct {
@@ -45,8 +45,8 @@ func GetUser(c *fiber.Ctx, db *gorm.DB) error {
 
 func CreateUser(c *fiber.Ctx, db *gorm.DB) error {
 	var req CreateUserRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	if err := validateBody(c, &req); err != nil {
+		return err
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -67,7 +67,7 @@ func CreateUser(c *fiber.Ctx, db *gorm.DB) error {
 	}
 
 	if err := db.Create(&user).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 
 	return c.Status(201).JSON(fiber.Map{
@@ -141,7 +141,7 @@ func UpdateUser(c *fiber.Ctx, db *gorm.DB) error {
 func DeleteUser(c *fiber.Ctx, db *gorm.DB) error {
 	id, _ := c.ParamsInt("id")
 	if err := db.Delete(&models.User{}, id).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.SendStatus(204)
 }

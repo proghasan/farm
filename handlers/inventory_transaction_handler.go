@@ -31,14 +31,15 @@ func GetInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
 
 func CreateInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	var txn models.InventoryTransaction
-	if err := c.BodyParser(&txn); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	if err := validateBody(c, &txn); err != nil {
+		return err
 	}
 	txn.CreatedBy = middleware.GetUserID(c)
 	txn.UpdatedBy = middleware.GetUserID(c)
 	if err := db.Create(&txn).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
+	db.Preload("InventoryItem.Category").First(&txn, txn.ID)
 	return c.Status(201).JSON(txn)
 }
 
@@ -56,13 +57,14 @@ func UpdateInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	input.CreatedBy = txn.CreatedBy
 	input.UpdatedBy = middleware.GetUserID(c)
 	db.Model(&txn).Updates(input)
+	db.Preload("InventoryItem.Category").First(&txn, txn.ID)
 	return c.JSON(txn)
 }
 
 func DeleteInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	id, _ := c.ParamsInt("id")
 	if err := db.Delete(&models.InventoryTransaction{}, id).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.SendStatus(204)
 }

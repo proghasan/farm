@@ -4,10 +4,14 @@ import (
 	"farm/database"
 	"farm/middleware"
 	"math"
+	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
+
+var validate = validator.New()
 
 type PaginatedRequest struct {
 	Page    int    `query:"page"`
@@ -68,4 +72,41 @@ func wrapHandler(fn handlerFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		return fn(c, useDB(c))
 	}
+}
+
+func recordExists(db *gorm.DB, model interface{}, id uint) (bool, error) {
+	var count int64
+	err := db.Model(model).Where("id = ?", id).Count(&count).Error
+	return count > 0, err
+}
+
+func handleError(c *fiber.Ctx, err error) error {
+	msg := err.Error()
+	if strings.Contains(msg, "Error 1452") {
+		parts := strings.Split(msg, "CONSTRAINT `")
+		if len(parts) > 1 {
+			fk := strings.Split(parts[1], "`")[0]
+			return c.Status(422).JSON(fiber.Map{"error": "Referenced record not found (" + fk + ")"})
+		}
+		return c.Status(422).JSON(fiber.Map{"error": "Referenced record not found"})
+	}
+	if strings.Contains(msg, "Duplicate entry") {
+		return c.Status(409).JSON(fiber.Map{"error": "Duplicate value, record already exists"})
+	}
+	return c.Status(400).JSON(fiber.Map{"error": msg})
+}
+
+func validateBody(c *fiber.Ctx, out interface{}) error {
+	if err := c.BodyParser(out); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+	if err := validate.Struct(out); err != nil {
+		errs := err.(validator.ValidationErrors)
+		msgs := make([]string, 0)
+		for _, e := range errs {
+			msgs = append(msgs, e.Field()+" is "+e.Tag())
+		}
+		return c.Status(422).JSON(fiber.Map{"errors": msgs})
+	}
+	return nil
 }

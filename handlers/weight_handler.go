@@ -28,8 +28,8 @@ func GetWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
 
 func CreateWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
 	var w models.AnimalWeightHistory
-	if err := c.BodyParser(&w); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	if err := validateBody(c, &w); err != nil {
+		return err
 	}
 	w.CreatedBy = middleware.GetUserID(c)
 	w.UpdatedBy = middleware.GetUserID(c)
@@ -42,8 +42,9 @@ func CreateWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
 		return nil
 	})
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
+	db.Preload("Animal").First(&w, w.ID)
 	return c.Status(201).JSON(w)
 }
 
@@ -67,7 +68,7 @@ func UpdateWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
 func DeleteWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
 	id, _ := c.ParamsInt("id")
 	if err := db.Delete(&models.AnimalWeightHistory{}, id).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.SendStatus(204)
 }

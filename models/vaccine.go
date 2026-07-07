@@ -4,14 +4,14 @@ import "time"
 
 type Vaccine struct {
 	ID              uint   `gorm:"primaryKey" json:"id"`
-	SpeciesID       uint   `gorm:"not null" json:"species_id"`
-	Name            string `gorm:"size:150;not null" json:"name"`
+	SpeciesID       uint    `gorm:"not null" json:"species_id" validate:"required"`
+	Name            string  `gorm:"size:150;not null" json:"name" validate:"required,min=1,max=150"`
 	Description     *string `gorm:"type:text" json:"description,omitempty"`
 	Dose            *string `gorm:"size:100" json:"dose,omitempty"`
-	MinimumAgeValue uint   `gorm:"not null" json:"minimum_age_value"`
-	MinimumAgeUnit  string `gorm:"size:20;not null" json:"minimum_age_unit"`
-	IntervalValue   int    `gorm:"not null" json:"interval_value"`
-	IntervalUnit    string `gorm:"size:20;not null" json:"interval_unit"`
+	MinimumAgeValue uint    `gorm:"not null" json:"minimum_age_value" validate:"required"`
+	MinimumAgeUnit  string  `gorm:"size:20;not null" json:"minimum_age_unit" validate:"required,oneof=Day Week Month Year"`
+	IntervalValue   int     `gorm:"not null" json:"interval_value" validate:"required"`
+	IntervalUnit    string  `gorm:"size:20;not null" json:"interval_unit" validate:"required,oneof=Day Week Month Year"`
 	IsRepeatable    bool   `gorm:"default:true" json:"is_repeatable"`
 	CreatedBy       uint   `gorm:"not null;default:0" json:"created_by"`
 	UpdatedBy       uint   `gorm:"not null;default:0" json:"updated_by"`

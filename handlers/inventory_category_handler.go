@@ -25,13 +25,13 @@ func GetInventoryCategory(c *fiber.Ctx, db *gorm.DB) error {
 
 func CreateInventoryCategory(c *fiber.Ctx, db *gorm.DB) error {
 	var cat models.InventoryCategory
-	if err := c.BodyParser(&cat); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	if err := validateBody(c, &cat); err != nil {
+		return err
 	}
 	cat.CreatedBy = middleware.GetUserID(c)
 	cat.UpdatedBy = middleware.GetUserID(c)
 	if err := db.Create(&cat).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.Status(201).JSON(cat)
 }
@@ -56,7 +56,7 @@ func UpdateInventoryCategory(c *fiber.Ctx, db *gorm.DB) error {
 func DeleteInventoryCategory(c *fiber.Ctx, db *gorm.DB) error {
 	id, _ := c.ParamsInt("id")
 	if err := db.Delete(&models.InventoryCategory{}, id).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.SendStatus(204)
 }

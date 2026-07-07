@@ -28,14 +28,15 @@ func GetVaccine(c *fiber.Ctx, db *gorm.DB) error {
 
 func CreateVaccine(c *fiber.Ctx, db *gorm.DB) error {
 	var vaccine models.Vaccine
-	if err := c.BodyParser(&vaccine); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	if err := validateBody(c, &vaccine); err != nil {
+		return err
 	}
 	vaccine.CreatedBy = middleware.GetUserID(c)
 	vaccine.UpdatedBy = middleware.GetUserID(c)
 	if err := db.Create(&vaccine).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
+	db.Preload("Species").First(&vaccine, vaccine.ID)
 	return c.Status(201).JSON(vaccine)
 }
 
@@ -53,13 +54,14 @@ func UpdateVaccine(c *fiber.Ctx, db *gorm.DB) error {
 	input.CreatedBy = vaccine.CreatedBy
 	input.UpdatedBy = middleware.GetUserID(c)
 	db.Model(&vaccine).Updates(input)
+	db.Preload("Species").First(&vaccine, vaccine.ID)
 	return c.JSON(vaccine)
 }
 
 func DeleteVaccine(c *fiber.Ctx, db *gorm.DB) error {
 	id, _ := c.ParamsInt("id")
 	if err := db.Delete(&models.Vaccine{}, id).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.SendStatus(204)
 }

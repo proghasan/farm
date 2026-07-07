@@ -28,14 +28,15 @@ func GetBreed(c *fiber.Ctx, db *gorm.DB) error {
 
 func CreateBreed(c *fiber.Ctx, db *gorm.DB) error {
 	var breed models.Breed
-	if err := c.BodyParser(&breed); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	if err := validateBody(c, &breed); err != nil {
+		return err
 	}
 	breed.CreatedBy = middleware.GetUserID(c)
 	breed.UpdatedBy = middleware.GetUserID(c)
 	if err := db.Create(&breed).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
+	db.Preload("Species").First(&breed, breed.ID)
 	return c.Status(201).JSON(breed)
 }
 
@@ -53,13 +54,14 @@ func UpdateBreed(c *fiber.Ctx, db *gorm.DB) error {
 	input.CreatedBy = breed.CreatedBy
 	input.UpdatedBy = middleware.GetUserID(c)
 	db.Model(&breed).Updates(input)
+	db.Preload("Species").First(&breed, breed.ID)
 	return c.JSON(breed)
 }
 
 func DeleteBreed(c *fiber.Ctx, db *gorm.DB) error {
 	id, _ := c.ParamsInt("id")
 	if err := db.Delete(&models.Breed{}, id).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.SendStatus(204)
 }

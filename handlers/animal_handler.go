@@ -39,14 +39,15 @@ func GetAnimal(c *fiber.Ctx, db *gorm.DB) error {
 
 func CreateAnimal(c *fiber.Ctx, db *gorm.DB) error {
 	var animal models.Animal
-	if err := c.BodyParser(&animal); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	if err := validateBody(c, &animal); err != nil {
+		return err
 	}
 	animal.CreatedBy = middleware.GetUserID(c)
 	animal.UpdatedBy = middleware.GetUserID(c)
 	if err := db.Create(&animal).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
+	db.Preload("Species").Preload("Breed").First(&animal, animal.ID)
 	return c.Status(201).JSON(animal)
 }
 
@@ -64,13 +65,14 @@ func UpdateAnimal(c *fiber.Ctx, db *gorm.DB) error {
 	input.CreatedBy = animal.CreatedBy
 	input.UpdatedBy = middleware.GetUserID(c)
 	db.Model(&animal).Updates(input)
+	db.Preload("Species").Preload("Breed").First(&animal, animal.ID)
 	return c.JSON(animal)
 }
 
 func DeleteAnimal(c *fiber.Ctx, db *gorm.DB) error {
 	id, _ := c.ParamsInt("id")
 	if err := db.Delete(&models.Animal{}, id).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.SendStatus(204)
 }

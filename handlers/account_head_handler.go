@@ -28,13 +28,13 @@ func GetAccountHead(c *fiber.Ctx, db *gorm.DB) error {
 
 func CreateAccountHead(c *fiber.Ctx, db *gorm.DB) error {
 	var head models.AccountHead
-	if err := c.BodyParser(&head); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	if err := validateBody(c, &head); err != nil {
+		return err
 	}
 	head.CreatedBy = middleware.GetUserID(c)
 	head.UpdatedBy = middleware.GetUserID(c)
 	if err := db.Create(&head).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.Status(201).JSON(head)
 }
@@ -59,7 +59,7 @@ func UpdateAccountHead(c *fiber.Ctx, db *gorm.DB) error {
 func DeleteAccountHead(c *fiber.Ctx, db *gorm.DB) error {
 	id, _ := c.ParamsInt("id")
 	if err := db.Delete(&models.AccountHead{}, id).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return handleError(c, err)
 	}
 	return c.SendStatus(204)
 }

@@ -76,12 +76,12 @@ func Login(cfg *config.Config) fiber.Handler {
 
 func GetUserID(c *fiber.Ctx) uint {
 	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(AuthClaims)
+	claims := user.Claims.(*AuthClaims)
 	return claims.UserID
 }
 
 func GetUserRole(c *fiber.Ctx) string {
 	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(AuthClaims)
+	claims := user.Claims.(*AuthClaims)
 	return claims.Role
 }
