@@ -8,7 +8,7 @@ import (
 	"farm/models"
 	"farm/routes"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"golang.org/x/crypto/bcrypt"
 )
 

@@ -4,11 +4,11 @@ import (
 	"farm/middleware"
 	"farm/models"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
 
-func ListInventoryTransactions(c *fiber.Ctx, db *gorm.DB) error {
+func ListInventoryTransactions(c fiber.Ctx, db *gorm.DB) error {
 	var txns []models.InventoryTransaction
 	tx := db.Model(&models.InventoryTransaction{}).Preload("InventoryItem.Category")
 	if itemID := c.Query("inventory_item_id"); itemID != "" {
@@ -20,8 +20,8 @@ func ListInventoryTransactions(c *fiber.Ctx, db *gorm.DB) error {
 	return paginate(c, tx.Order("transaction_date DESC"), &txns)
 }
 
-func GetInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func GetInventoryTransaction(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var txn models.InventoryTransaction
 	if err := db.Preload("InventoryItem.Category").First(&txn, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Transaction not found"})
@@ -29,7 +29,7 @@ func GetInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(txn)
 }
 
-func CreateInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
+func CreateInventoryTransaction(c fiber.Ctx, db *gorm.DB) error {
 	var txn models.InventoryTransaction
 	if err := validateBody(c, &txn); err != nil {
 		return err
@@ -43,14 +43,14 @@ func CreateInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	return c.Status(201).JSON(txn)
 }
 
-func UpdateInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func UpdateInventoryTransaction(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var txn models.InventoryTransaction
 	if err := db.First(&txn, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Transaction not found"})
 	}
 	var input models.InventoryTransaction
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
 	input.ID = txn.ID
@@ -61,8 +61,8 @@ func UpdateInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(txn)
 }
 
-func DeleteInventoryTransaction(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func DeleteInventoryTransaction(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	if err := db.Delete(&models.InventoryTransaction{}, id).Error; err != nil {
 		return handleError(c, err)
 	}

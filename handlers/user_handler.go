@@ -4,7 +4,7 @@ import (
 	"farm/middleware"
 	"farm/models"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -28,14 +28,14 @@ type UpdateUserRequest struct {
 	Status   *string `json:"status"`
 }
 
-func ListUsers(c *fiber.Ctx, db *gorm.DB) error {
+func ListUsers(c fiber.Ctx, db *gorm.DB) error {
 	var users []models.User
 	tx := db.Model(&models.User{}).Select("id, name, email, phone, username, role, status, created_at, updated_at")
 	return paginate(c, tx, &users)
 }
 
-func GetUser(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func GetUser(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var user models.User
 	if err := db.Select("id, name, email, phone, username, role, status, created_at, updated_at").First(&user, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
@@ -43,7 +43,7 @@ func GetUser(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(user)
 }
 
-func CreateUser(c *fiber.Ctx, db *gorm.DB) error {
+func CreateUser(c fiber.Ctx, db *gorm.DB) error {
 	var req CreateUserRequest
 	if err := validateBody(c, &req); err != nil {
 		return err
@@ -80,8 +80,8 @@ func CreateUser(c *fiber.Ctx, db *gorm.DB) error {
 	})
 }
 
-func UpdateUser(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func UpdateUser(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 
 	// Only Owner and Manager can update other users; users can update themselves
 	uid := middleware.GetUserID(c)
@@ -96,7 +96,7 @@ func UpdateUser(c *fiber.Ctx, db *gorm.DB) error {
 	}
 
 	var req UpdateUserRequest
-	if err := c.BodyParser(&req); err != nil {
+	if err := c.Bind().Body(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
 
@@ -138,15 +138,15 @@ func UpdateUser(c *fiber.Ctx, db *gorm.DB) error {
 	})
 }
 
-func DeleteUser(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func DeleteUser(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	if err := db.Delete(&models.User{}, id).Error; err != nil {
 		return handleError(c, err)
 	}
 	return c.SendStatus(204)
 }
 
-func GetProfile(c *fiber.Ctx, db *gorm.DB) error {
+func GetProfile(c fiber.Ctx, db *gorm.DB) error {
 	uid := middleware.GetUserID(c)
 	var user models.User
 	if err := db.Select("id, name, email, phone, username, role, status, avatar, last_login_at, created_at, updated_at").First(&user, uid).Error; err != nil {

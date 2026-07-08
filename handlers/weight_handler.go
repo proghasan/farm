@@ -4,11 +4,11 @@ import (
 	"farm/middleware"
 	"farm/models"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
 
-func ListWeightHistories(c *fiber.Ctx, db *gorm.DB) error {
+func ListWeightHistories(c fiber.Ctx, db *gorm.DB) error {
 	var weights []models.AnimalWeightHistory
 	tx := db.Model(&models.AnimalWeightHistory{}).Preload("Animal")
 	if animalID := c.Query("animal_id"); animalID != "" {
@@ -17,8 +17,8 @@ func ListWeightHistories(c *fiber.Ctx, db *gorm.DB) error {
 	return paginate(c, tx.Order("record_date DESC"), &weights)
 }
 
-func GetWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func GetWeightHistory(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var w models.AnimalWeightHistory
 	if err := db.Preload("Animal").First(&w, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Record not found"})
@@ -26,7 +26,7 @@ func GetWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(w)
 }
 
-func CreateWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
+func CreateWeightHistory(c fiber.Ctx, db *gorm.DB) error {
 	var w models.AnimalWeightHistory
 	if err := validateBody(c, &w); err != nil {
 		return err
@@ -48,14 +48,14 @@ func CreateWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
 	return c.Status(201).JSON(w)
 }
 
-func UpdateWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func UpdateWeightHistory(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var w models.AnimalWeightHistory
 	if err := db.First(&w, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Record not found"})
 	}
 	var input models.AnimalWeightHistory
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
 	input.ID = w.ID
@@ -65,8 +65,8 @@ func UpdateWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(w)
 }
 
-func DeleteWeightHistory(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func DeleteWeightHistory(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	if err := db.Delete(&models.AnimalWeightHistory{}, id).Error; err != nil {
 		return handleError(c, err)
 	}

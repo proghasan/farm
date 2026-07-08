@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
 
@@ -27,9 +27,9 @@ type PaginatedResponse struct {
 	TotalPages int         `json:"total_pages"`
 }
 
-func paginate(c *fiber.Ctx, tx *gorm.DB, dest interface{}) error {
-	page := c.QueryInt("page", 1)
-	perPage := c.QueryInt("per_page", 20)
+func paginate(c fiber.Ctx, tx *gorm.DB, dest interface{}) error {
+	page := fiber.Query[int](c, "page", 1)
+	perPage := fiber.Query[int](c, "per_page", 20)
 	if perPage < 1 || perPage > 100 {
 		perPage = 20
 	}
@@ -52,24 +52,24 @@ func paginate(c *fiber.Ctx, tx *gorm.DB, dest interface{}) error {
 	})
 }
 
-func setCreatedBy(c *fiber.Ctx, tx *gorm.DB) *gorm.DB {
+func setCreatedBy(c fiber.Ctx, tx *gorm.DB) *gorm.DB {
 	uid := middleware.GetUserID(c)
 	return tx.Set("created_by", uid)
 }
 
-func setUpdatedBy(c *fiber.Ctx, tx *gorm.DB) *gorm.DB {
+func setUpdatedBy(c fiber.Ctx, tx *gorm.DB) *gorm.DB {
 	uid := middleware.GetUserID(c)
 	return tx.Set("updated_by", uid)
 }
 
-func useDB(c *fiber.Ctx) *gorm.DB {
+func useDB(c fiber.Ctx) *gorm.DB {
 	return database.DB
 }
 
-type handlerFunc func(c *fiber.Ctx, db *gorm.DB) error
+type handlerFunc func(c fiber.Ctx, db *gorm.DB) error
 
 func wrapHandler(fn handlerFunc) fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		return fn(c, useDB(c))
 	}
 }
@@ -80,7 +80,7 @@ func recordExists(db *gorm.DB, model interface{}, id uint) (bool, error) {
 	return count > 0, err
 }
 
-func handleError(c *fiber.Ctx, err error) error {
+func handleError(c fiber.Ctx, err error) error {
 	msg := err.Error()
 	if strings.Contains(msg, "Error 1452") {
 		parts := strings.Split(msg, "CONSTRAINT `")
@@ -96,8 +96,8 @@ func handleError(c *fiber.Ctx, err error) error {
 	return c.Status(400).JSON(fiber.Map{"error": msg})
 }
 
-func validateBody(c *fiber.Ctx, out interface{}) error {
-	if err := c.BodyParser(out); err != nil {
+func validateBody(c fiber.Ctx, out interface{}) error {
+	if err := c.Bind().Body(out); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 	if err := validate.Struct(out); err != nil {

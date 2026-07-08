@@ -4,11 +4,11 @@ import (
 	"farm/middleware"
 	"farm/models"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
 
-func ListVaccines(c *fiber.Ctx, db *gorm.DB) error {
+func ListVaccines(c fiber.Ctx, db *gorm.DB) error {
 	var vaccines []models.Vaccine
 	tx := db.Model(&models.Vaccine{}).Preload("Species")
 	if speciesID := c.Query("species_id"); speciesID != "" {
@@ -17,8 +17,8 @@ func ListVaccines(c *fiber.Ctx, db *gorm.DB) error {
 	return paginate(c, tx, &vaccines)
 }
 
-func GetVaccine(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func GetVaccine(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var vaccine models.Vaccine
 	if err := db.Preload("Species").First(&vaccine, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Vaccine not found"})
@@ -26,7 +26,7 @@ func GetVaccine(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(vaccine)
 }
 
-func CreateVaccine(c *fiber.Ctx, db *gorm.DB) error {
+func CreateVaccine(c fiber.Ctx, db *gorm.DB) error {
 	var vaccine models.Vaccine
 	if err := validateBody(c, &vaccine); err != nil {
 		return err
@@ -40,14 +40,14 @@ func CreateVaccine(c *fiber.Ctx, db *gorm.DB) error {
 	return c.Status(201).JSON(vaccine)
 }
 
-func UpdateVaccine(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func UpdateVaccine(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var vaccine models.Vaccine
 	if err := db.First(&vaccine, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Vaccine not found"})
 	}
 	var input models.Vaccine
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
 	input.ID = vaccine.ID
@@ -58,8 +58,8 @@ func UpdateVaccine(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(vaccine)
 }
 
-func DeleteVaccine(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func DeleteVaccine(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	if err := db.Delete(&models.Vaccine{}, id).Error; err != nil {
 		return handleError(c, err)
 	}

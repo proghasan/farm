@@ -6,16 +6,15 @@ import (
 	"farm/handlers"
 	"farm/middleware"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	jwtware "github.com/gofiber/contrib/jwt"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 	"gorm.io/gorm"
 )
 
 func Setup(app *fiber.App, cfg *config.Config) {
 	app.Use(cors.New())
 
-	app.Get("/health", func(c *fiber.Ctx) error {
+	app.Get("/health", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
 
@@ -24,11 +23,7 @@ func Setup(app *fiber.App, cfg *config.Config) {
 	auth.Post("/login", middleware.Login(cfg))
 
 	// Protected routes
-	api := app.Group("/api", jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{Key: []byte(cfg.JWTSecret)},
-		ContextKey: "user",
-		Claims:     &middleware.AuthClaims{},
-	}))
+	api := app.Group("/api", middleware.JWTAuth(cfg.JWTSecret))
 
 	// Users
 	users := api.Group("/users")
@@ -128,8 +123,8 @@ func Setup(app *fiber.App, cfg *config.Config) {
 	acctTxns.Delete("/:id", wrapH(handlers.DeleteAccountTransaction))
 }
 
-func wrapH(fn func(c *fiber.Ctx, db *gorm.DB) error) fiber.Handler {
-	return func(c *fiber.Ctx) error {
+func wrapH(fn func(c fiber.Ctx, db *gorm.DB) error) fiber.Handler {
+	return func(c fiber.Ctx) error {
 		return fn(c, database.DB)
 	}
 }

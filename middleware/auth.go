@@ -4,9 +4,10 @@ import (
 	"farm/config"
 	"farm/database"
 	"farm/models"
+	"strings"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,14 +24,17 @@ type AuthClaims struct {
 }
 
 func Login(cfg *config.Config) fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		var req LoginRequest
-		if err := c.BodyParser(&req); err != nil {
+		if err := c.Bind().Body(&req); err != nil {
 			return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 		}
 
 		var user models.User
-		result := database.DB.Where("email = ? OR phone = ? OR username = ?", req.Login, req.Login, req.Login).First(&user)
+		result := database.DB.Where(
+			"email = ? OR phone = ? OR username = ?",
+			req.Login, req.Login, req.Login,
+		).First(&user)
 		if result.Error != nil {
 			return c.Status(401).JSON(fiber.Map{"error": "Invalid credentials"})
 		}
@@ -74,13 +78,33 @@ func Login(cfg *config.Config) fiber.Handler {
 	}
 }
 
-func GetUserID(c *fiber.Ctx) uint {
+func JWTAuth(secret string) fiber.Handler {
+	return func(c fiber.Ctx) error {
+		authHeader := c.Get("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			return c.Status(401).JSON(fiber.Map{"error": "Missing or invalid authorization header"})
+		}
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		token, err := jwt.ParseWithClaims(tokenString, &AuthClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		})
+		if err != nil {
+			return c.Status(401).JSON(fiber.Map{"error": "Invalid or expired token"})
+		}
+
+		c.Locals("user", token)
+		return c.Next()
+	}
+}
+
+func GetUserID(c fiber.Ctx) uint {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(*AuthClaims)
 	return claims.UserID
 }
 
-func GetUserRole(c *fiber.Ctx) string {
+func GetUserRole(c fiber.Ctx) string {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(*AuthClaims)
 	return claims.Role

@@ -4,11 +4,11 @@ import (
 	"farm/middleware"
 	"farm/models"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
 
-func ListAccountTransactions(c *fiber.Ctx, db *gorm.DB) error {
+func ListAccountTransactions(c fiber.Ctx, db *gorm.DB) error {
 	var txns []models.AccountTransaction
 	tx := db.Model(&models.AccountTransaction{}).Preload("AccountHead")
 	if headID := c.Query("account_head_id"); headID != "" {
@@ -20,8 +20,8 @@ func ListAccountTransactions(c *fiber.Ctx, db *gorm.DB) error {
 	return paginate(c, tx.Order("transaction_date DESC"), &txns)
 }
 
-func GetAccountTransaction(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func GetAccountTransaction(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var txn models.AccountTransaction
 	if err := db.Preload("AccountHead").First(&txn, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Transaction not found"})
@@ -29,7 +29,7 @@ func GetAccountTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(txn)
 }
 
-func CreateAccountTransaction(c *fiber.Ctx, db *gorm.DB) error {
+func CreateAccountTransaction(c fiber.Ctx, db *gorm.DB) error {
 	var txn models.AccountTransaction
 	if err := validateBody(c, &txn); err != nil {
 		return err
@@ -43,14 +43,14 @@ func CreateAccountTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	return c.Status(201).JSON(txn)
 }
 
-func UpdateAccountTransaction(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func UpdateAccountTransaction(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var txn models.AccountTransaction
 	if err := db.First(&txn, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Transaction not found"})
 	}
 	var input models.AccountTransaction
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
 	input.ID = txn.ID
@@ -61,8 +61,8 @@ func UpdateAccountTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(txn)
 }
 
-func DeleteAccountTransaction(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func DeleteAccountTransaction(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	if err := db.Delete(&models.AccountTransaction{}, id).Error; err != nil {
 		return handleError(c, err)
 	}

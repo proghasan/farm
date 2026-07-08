@@ -4,18 +4,18 @@ import (
 	"farm/middleware"
 	"farm/models"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
 
-func ListSpecies(c *fiber.Ctx, db *gorm.DB) error {
+func ListSpecies(c fiber.Ctx, db *gorm.DB) error {
 	var species []models.Species
 	tx := db.Model(&models.Species{}).Preload("Breeds")
 	return paginate(c, tx, &species)
 }
 
-func GetSpecies(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func GetSpecies(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var species models.Species
 	if err := db.Preload("Breeds").First(&species, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Species not found"})
@@ -23,7 +23,7 @@ func GetSpecies(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(species)
 }
 
-func CreateSpecies(c *fiber.Ctx, db *gorm.DB) error {
+func CreateSpecies(c fiber.Ctx, db *gorm.DB) error {
 	var species models.Species
 	if err := validateBody(c, &species); err != nil {
 		return err
@@ -36,14 +36,14 @@ func CreateSpecies(c *fiber.Ctx, db *gorm.DB) error {
 	return c.Status(201).JSON(species)
 }
 
-func UpdateSpecies(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func UpdateSpecies(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var species models.Species
 	if err := db.First(&species, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Species not found"})
 	}
 	var input models.Species
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
 	input.ID = species.ID
@@ -53,8 +53,8 @@ func UpdateSpecies(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(species)
 }
 
-func DeleteSpecies(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func DeleteSpecies(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	if err := db.Delete(&models.Species{}, id).Error; err != nil {
 		return handleError(c, err)
 	}

@@ -4,11 +4,11 @@ import (
 	"farm/middleware"
 	"farm/models"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
 
-func ListAnimals(c *fiber.Ctx, db *gorm.DB) error {
+func ListAnimals(c fiber.Ctx, db *gorm.DB) error {
 	var animals []models.Animal
 	tx := db.Model(&models.Animal{}).Preload("Species").Preload("Breed")
 	if speciesID := c.Query("species_id"); speciesID != "" {
@@ -23,8 +23,8 @@ func ListAnimals(c *fiber.Ctx, db *gorm.DB) error {
 	return paginate(c, tx, &animals)
 }
 
-func GetAnimal(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func GetAnimal(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var animal models.Animal
 	if err := db.
 		Preload("Species").
@@ -37,7 +37,7 @@ func GetAnimal(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(animal)
 }
 
-func CreateAnimal(c *fiber.Ctx, db *gorm.DB) error {
+func CreateAnimal(c fiber.Ctx, db *gorm.DB) error {
 	var animal models.Animal
 	if err := validateBody(c, &animal); err != nil {
 		return err
@@ -51,14 +51,14 @@ func CreateAnimal(c *fiber.Ctx, db *gorm.DB) error {
 	return c.Status(201).JSON(animal)
 }
 
-func UpdateAnimal(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func UpdateAnimal(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	var animal models.Animal
 	if err := db.First(&animal, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Animal not found"})
 	}
 	var input models.Animal
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
 	input.ID = animal.ID
@@ -69,8 +69,8 @@ func UpdateAnimal(c *fiber.Ctx, db *gorm.DB) error {
 	return c.JSON(animal)
 }
 
-func DeleteAnimal(c *fiber.Ctx, db *gorm.DB) error {
-	id, _ := c.ParamsInt("id")
+func DeleteAnimal(c fiber.Ctx, db *gorm.DB) error {
+	id := fiber.Params[int](c, "id", 0)
 	if err := db.Delete(&models.Animal{}, id).Error; err != nil {
 		return handleError(c, err)
 	}
