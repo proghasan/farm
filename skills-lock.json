@@ -1,11 +1,35 @@
 {
   "version": 1,
   "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
     "golang-code-style": {
       "source": "samber/cc-skills-golang",
       "sourceType": "github",
       "skillPath": "skills/golang-code-style/SKILL.md",
       "computedHash": "1c949d9721fac34faf39e640a08c9f17b6449a64183824ac99d2e3785b1fef57"
+    },
+    "tailwind-design-system": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-mobile-development/skills/tailwind-design-system/SKILL.md",
+      "computedHash": "cd61afd28f594e8b6712b61749209cbb4466e3eec4e4223793bbd97fc85c1b63"
+    },
+    "vue": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vue/SKILL.md",
+      "computedHash": "9c241141e07e836e4f0537c63e8f929fba3767c2997250be38e699f19b75e3f2"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
     }
   }
 }
