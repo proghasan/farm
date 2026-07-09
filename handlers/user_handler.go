@@ -23,7 +23,7 @@ type UpdateUserRequest struct {
 	Email    *string `json:"email"`
 	Phone    *string `json:"phone"`
 	Username *string `json:"username"`
-	Password *string `json:"password,omitempty"`
+	Password *string `json:"password"`
 	Role     *string `json:"role"`
 	Status   *string `json:"status"`
 }

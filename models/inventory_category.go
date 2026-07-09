@@ -10,5 +10,5 @@ type InventoryCategory struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
-	Items []InventoryItem `gorm:"foreignKey:CategoryID" json:"items,omitempty"`
+	Items []InventoryItem `gorm:"foreignKey:CategoryID" json:"items"`
 }

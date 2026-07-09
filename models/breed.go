@@ -11,5 +11,5 @@ type Breed struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
-	Species Species `gorm:"foreignKey:SpeciesID" json:"species,omitempty"`
+	Species Species `gorm:"foreignKey:SpeciesID" json:"species"`
 }
