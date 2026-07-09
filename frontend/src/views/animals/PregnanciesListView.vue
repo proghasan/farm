@@ -177,7 +177,7 @@ onUnmounted(() => headerStore.clear())
       :loading="loading"
     >
       <template #cell-animal_display="{ item }">
-        {{ item.animal ? `${item.animal.tag_no}${item.animal.name ? ' - ' + item.animal.name : ''}` : '-' }}
+        {{ item.animal?.tag_no || '-' }}
       </template>
       <template #cell-mating_date="{ item }">
         {{ item.mating_date ? new Date(item.mating_date).toLocaleDateString() : '-' }}
@@ -197,14 +197,14 @@ onUnmounted(() => headerStore.clear())
             <label class="block text-sm font-medium text-gray-700 mb-1">Animal</label>
             <select v-model.number="form.animal_id" required class="rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all w-full">
               <option :value="0" disabled>Select animal</option>
-              <option v-for="a in animalList.filter(a => a.gender === 'Female')" :key="a.id" :value="a.id">{{ a.tag_no }}{{ a.name ? ' - ' + a.name : '' }}</option>
+              <option v-for="a in animalList.filter(a => a.gender === 'Female')" :key="a.id" :value="a.id">{{ a.tag_no }}</option>
             </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Breeder (optional)</label>
             <select v-model.number="form.breeder_id" class="rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all w-full">
               <option :value="null">Not specified</option>
-              <option v-for="a in animalList.filter(a => a.gender === 'Male')" :key="a.id" :value="a.id">{{ a.tag_no }}{{ a.name ? ' - ' + a.name : '' }}</option>
+              <option v-for="a in animalList.filter(a => a.gender === 'Male')" :key="a.id" :value="a.id">{{ a.tag_no }}</option>
             </select>
           </div>
           <div>

@@ -44,7 +44,6 @@ CREATE TABLE breeds (
 CREATE TABLE animals (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     tag_no VARCHAR(50) NOT NULL UNIQUE,
-    name VARCHAR(150) NULL,
     species_id BIGINT UNSIGNED NOT NULL,
     breed_id BIGINT UNSIGNED NULL,
     gender ENUM('Male','Female') NOT NULL,

@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import {
-  listAnimals,
+  listAnimalsPaginated,
   createAnimal,
   updateAnimal,
   deleteAnimal,
@@ -29,13 +29,15 @@ const speciesList = ref<Species[]>([]);
 const breedsList = ref<Breed[]>([]);
 const weightHistories = ref<WeightHistory[]>([]);
 const loading = ref(false);
+const page = ref(1);
+const pageSize = ref(20);
+const totalItems = ref(0);
 const showModal = ref(false);
 const editingId = ref<number | null>(null);
 const saving = ref(false);
 
 const form = ref({
   tag_no: "",
-  name: "",
   species_id: null as number | null,
   breed_id: null as number | null,
   gender: "Male",
@@ -62,13 +64,14 @@ const weightHistoriesForAnimal = computed(() =>
 async function fetchData() {
   loading.value = true;
   try {
-    const [animals, species, breeds, weights] = await Promise.all([
-      listAnimals(),
+    const [result, species, breeds, weights] = await Promise.all([
+      listAnimalsPaginated({ page: page.value, per_page: pageSize.value }),
       listSpecies(),
       listBreeds(),
       listWeightHistories(),
     ]);
-    items.value = animals;
+    items.value = result.data;
+    totalItems.value = result.total;
     speciesList.value = species;
     breedsList.value = breeds;
     weightHistories.value = weights;
@@ -79,7 +82,6 @@ async function fetchData() {
 
 const columns = [
   { key: "tag_no", label: "Tag No", sortable: true },
-  { key: "name", label: "Name" },
   { key: "species_name", label: "Species" },
   { key: "gender", label: "Gender" },
   { key: "status", label: "Status", component: AnimalStatusBadge },
@@ -102,7 +104,6 @@ function openCreate() {
   editingId.value = null;
   form.value = {
     tag_no: "",
-    name: "",
     species_id: null,
     breed_id: null,
     gender: "Male",
@@ -123,7 +124,6 @@ function openEdit(id: number) {
   editingId.value = id;
   form.value = {
     tag_no: item.tag_no,
-    name: item.name || "",
     species_id: item.species_id,
     breed_id: item.breed_id ?? null,
     gender: item.gender,
@@ -148,7 +148,6 @@ async function save() {
       status: form.value.status,
       purchase_price: form.value.purchase_price || 0,
     };
-    if (form.value.name) payload.name = form.value.name;
     if (form.value.breed_id) payload.breed_id = form.value.breed_id;
     if (form.value.birth_date) payload.birth_date = form.value.birth_date;
     if (form.value.purchase_date)
@@ -233,10 +232,17 @@ onUnmounted(() => headerStore.clear());
       title="Animals"
       subtitle="Manage livestock and animal records"
     />
-    <DataTable :columns="columns" :items="items" :loading="loading">
-      <template #cell-name="{ item }">
-        {{ item.name || "-" }}
-      </template>
+    <DataTable
+      :columns="columns"
+      :items="items"
+      :loading="loading"
+      :server-mode="true"
+      :total-items="totalItems"
+      :current-page="page"
+      :page-size="pageSize"
+      @update:current-page="page = $event; fetchData()"
+      @update:page-size="pageSize = $event; page = 1; fetchData()"
+    >
       <template #cell-species_name="{ item }">
         {{ item.species?.name || "-" }}
       </template>
@@ -263,16 +269,6 @@ onUnmounted(() => headerStore.clear());
               v-model="form.tag_no"
               type="text"
               required
-              class="rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all w-full"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1"
-              >Name</label
-            >
-            <input
-              v-model="form.name"
-              type="text"
               class="rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all w-full"
             />
           </div>

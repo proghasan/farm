@@ -76,7 +76,7 @@ onUnmounted(() => headerStore.clear())
   <div v-else class="max-w-4xl">
     <div class="flex items-start justify-between mb-6">
       <div>
-        <PageHeader :title="`${animal.tag_no}${animal.name ? ' - ' + animal.name : ''}`" :subtitle="`${animal.species?.name || ''}${animal.breed ? ' / ' + animal.breed.name : ''}`" />
+        <PageHeader :title="animal.tag_no" :subtitle="`${animal.species?.name || ''}${animal.breed ? ' / ' + animal.breed.name : ''}`" />
       </div>
       <button @click="router.push('/animals')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Back to List</button>
     </div>
@@ -105,15 +105,14 @@ onUnmounted(() => headerStore.clear())
       <h3 class="text-sm font-semibold text-gray-900 mb-4">Details</h3>
       <div class="grid grid-cols-2 gap-x-8 gap-y-3">
         <div class="flex justify-between"><span class="text-sm text-gray-500">Tag No</span><span class="text-sm font-medium text-gray-900">{{ animal.tag_no }}</span></div>
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Name</span><span class="text-sm font-medium text-gray-900">{{ animal.name || '-' }}</span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Species</span><span class="text-sm font-medium text-gray-900">{{ animal.species?.name || '-' }}</span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Breed</span><span class="text-sm font-medium text-gray-900">{{ animal.breed?.name || '-' }}</span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Birth Date</span><span class="text-sm font-medium text-gray-900">{{ formatDate(animal.birth_date) }}</span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Purchase Date</span><span class="text-sm font-medium text-gray-900">{{ formatDate(animal.purchase_date) }}</span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Purchase Price</span><span class="text-sm font-medium text-gray-900">${{ Number(animal.purchase_price).toFixed(2) }}</span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Color</span><span class="text-sm font-medium text-gray-900">{{ animal.color || '-' }}</span></div>
-        <div v-if="animal.father" class="flex justify-between col-span-2"><span class="text-sm text-gray-500">Father</span><span class="text-sm font-medium text-gray-900">{{ animal.father.tag_no }}{{ animal.father.name ? ' - ' + animal.father.name : '' }}</span></div>
-        <div v-if="animal.mother" class="flex justify-between col-span-2"><span class="text-sm text-gray-500">Mother</span><span class="text-sm font-medium text-gray-900">{{ animal.mother.tag_no }}{{ animal.mother.name ? ' - ' + animal.mother.name : '' }}</span></div>
+        <div v-if="animal.father" class="flex justify-between col-span-2"><span class="text-sm text-gray-500">Father</span><span class="text-sm font-medium text-gray-900">{{ animal.father.tag_no }}</span></div>
+        <div v-if="animal.mother" class="flex justify-between col-span-2"><span class="text-sm text-gray-500">Mother</span><span class="text-sm font-medium text-gray-900">{{ animal.mother.tag_no }}</span></div>
         <div v-if="animal.remarks" class="col-span-2"><span class="text-sm text-gray-500">Remarks</span><p class="text-sm text-gray-900 mt-1">{{ animal.remarks }}</p></div>
       </div>
     </div>

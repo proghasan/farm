@@ -9,7 +9,6 @@ import (
 type Animal struct {
 	ID            uint           `gorm:"primaryKey" json:"id"`
 	TagNo         string         `gorm:"size:50;not null;unique" json:"tag_no" validate:"required,min=1,max=50"`
-	Name          *string        `gorm:"size:150" json:"name"`
 	SpeciesID     uint           `gorm:"not null" json:"species_id" validate:"required"`
 	BreedID       *uint          `json:"breed_id"`
 	FatherID      *uint          `json:"father_id"`

@@ -1,5 +1,13 @@
 import api from './client'
 
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  per_page: number
+  total_pages: number
+}
+
 export interface LoginPayload {
   username: string
   password: string
@@ -38,7 +46,6 @@ export interface Breed {
 export interface Animal {
   id: number
   tag_no: string
-  name?: string
   species_id: number
   breed_id?: number
   father_id?: number
@@ -177,6 +184,7 @@ export const deleteBreed = (id: number) => api.delete(`/breeds/${id}`)
 
 // Animals
 export const listAnimals = (params?: Record<string, any>) => api.get<{ data: Animal[] }>('/animals', { params }).then(r => r.data.data)
+export const listAnimalsPaginated = (params?: Record<string, any>) => api.get<PaginatedResponse<Animal>>('/animals', { params }).then(r => r.data)
 export const getAnimal = (id: number) => api.get<Animal>(`/animals/${id}`).then(r => r.data)
 export const getAnimalProfile = (id: number) => api.get<{ animal: Animal; pregnancies: Pregnancy[] }>(`/animals/${id}/profile`).then(r => r.data)
 export const createAnimal = (data: Partial<Animal>) => api.post('/animals', data)
