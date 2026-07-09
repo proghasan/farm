@@ -4,17 +4,11 @@ defineProps<{
 }>();
 
 const colors: Record<string, string> = {
-  Active: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   Healthy: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  Sick: "bg-amber-50 text-amber-700 ring-amber-200",
-  Deceased: "bg-red-50 text-red-700 ring-red-200",
-  Sold: "bg-blue-50 text-blue-700 ring-blue-200",
-  Mated: "bg-purple-50 text-purple-700 ring-purple-200",
   Pregnant: "bg-blue-50 text-blue-700 ring-blue-200",
-  Delivered: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  Aborted: "bg-red-50 text-red-700 ring-red-200",
-  Miscarriage: "bg-rose-50 text-rose-700 ring-rose-200",
-  Failed: "bg-gray-50 text-gray-600 ring-gray-200",
+  Sick: "bg-amber-50 text-amber-700 ring-amber-200",
+  Sold: "bg-gray-50 text-gray-600 ring-gray-200",
+  Dead: "bg-red-50 text-red-700 ring-red-200",
 };
 </script>
 
@@ -26,14 +20,11 @@ const colors: Record<string, string> = {
     <span
       class="w-1.5 h-1.5 rounded-full"
       :class="{
-        'bg-emerald-500':
-          value === 'Active' || value === 'Healthy' || value === 'Delivered',
-        'bg-red-500': value === 'Deceased' || value === 'Aborted',
+        'bg-emerald-500': value === 'Healthy',
+        'bg-blue-500': value === 'Pregnant',
         'bg-amber-500': value === 'Sick',
-        'bg-blue-500': value === 'Sold' || value === 'Pregnant',
-        'bg-purple-500': value === 'Mated',
-        'bg-rose-500': value === 'Miscarriage',
-        'bg-gray-400': value === 'Failed',
+        'bg-gray-400': value === 'Sold',
+        'bg-red-500': value === 'Dead',
       }"
     />
     {{ value }}

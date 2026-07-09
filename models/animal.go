@@ -6,6 +6,24 @@ import (
 	"gorm.io/gorm"
 )
 
+type AnimalStatus string
+
+const (
+	AnimalStatusHealthy  AnimalStatus = "Healthy"
+	AnimalStatusPregnant AnimalStatus = "Pregnant"
+	AnimalStatusSick     AnimalStatus = "Sick"
+	AnimalStatusSold     AnimalStatus = "Sold"
+	AnimalStatusDead     AnimalStatus = "Dead"
+)
+
+func (s AnimalStatus) Valid() bool {
+	switch s {
+	case AnimalStatusHealthy, AnimalStatusPregnant, AnimalStatusSick, AnimalStatusSold, AnimalStatusDead:
+		return true
+	}
+	return false
+}
+
 type Animal struct {
 	ID            uint           `gorm:"primaryKey" json:"id"`
 	TagNo         string         `gorm:"size:50;not null;unique" json:"tag_no" validate:"required,min=1,max=50"`
@@ -19,7 +37,7 @@ type Animal struct {
 	PurchasePrice float64        `gorm:"type:decimal(12,2);default:0" json:"purchase_price"`
 	CurrentWeight *float64       `gorm:"type:decimal(8,2)" json:"current_weight"`
 	Color         *string        `gorm:"size:100" json:"color"`
-	Status        string         `gorm:"size:20;default:Healthy" json:"status"`
+	Status        AnimalStatus   `gorm:"size:20;default:Healthy" json:"status" validate:"required,oneof=Healthy Pregnant Sick Sold Dead"`
 	Remarks       *string        `gorm:"type:text" json:"remarks"`
 	CreatedBy     uint           `gorm:"not null;default:0" json:"created_by"`
 	UpdatedBy     uint           `gorm:"not null;default:0" json:"updated_by"`

@@ -45,7 +45,7 @@ const form = ref({
   purchase_date: "",
   purchase_price: 0,
   color: "",
-  status: "Active",
+  status: "Healthy",
   remarks: "",
 });
 
@@ -111,7 +111,7 @@ function openCreate() {
     purchase_date: "",
     purchase_price: 0,
     color: "",
-    status: "Active",
+    status: "Healthy",
     remarks: "",
   };
   showWeightForm.value = false;
@@ -324,9 +324,11 @@ onUnmounted(() => headerStore.clear());
               required
               class="rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all w-full"
             >
-              <option value="Active">Active</option>
+              <option value="Healthy">Healthy</option>
+              <option value="Pregnant">Pregnant</option>
+              <option value="Sick">Sick</option>
               <option value="Sold">Sold</option>
-              <option value="Deceased">Deceased</option>
+              <option value="Dead">Dead</option>
             </select>
           </div>
           <div>
