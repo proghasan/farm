@@ -133,14 +133,13 @@ const displayTo = computed(() =>
               v-for="col in columns"
               :key="col.key"
               @click="col.sortable !== false && toggleSort(col.key)"
-              class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap"
-              :class="
-                col.sortable !== false
-                  ? 'cursor-pointer hover:text-gray-700 select-none'
-                  : ''
-              "
+              class="px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap"
+              :class="[
+                col.thPosition === 'right' ? 'text-right' : col.thPosition === 'center' ? 'text-center' : 'text-left',
+                col.sortable !== false ? 'cursor-pointer hover:text-gray-700 select-none' : '',
+              ]"
             >
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5" :class="col.thPosition === 'right' ? 'justify-end' : col.thPosition === 'center' ? 'justify-center' : 'justify-start'">
                 {{ col.label }}
                 <span
                   v-if="col.sortable !== false"
@@ -190,12 +189,13 @@ const displayTo = computed(() =>
             :key="item.id"
             class="hover:bg-gray-50 transition-colors group"
           >
-            <td v-for="col in columns" :key="col.key" class="px-4 py-3.5">
+            <td v-for="col in columns" :key="col.key" class="px-4 py-3.5" :class="col.tdPosition === 'right' ? 'text-right' : col.tdPosition === 'center' ? 'text-center' : 'text-left'">
               <template v-if="col.component">
                 <component
                   :is="col.component"
                   :item="item"
                   :value="item[col.key]"
+                  :position="col.tdPosition"
                   v-bind="col.componentProps || {}"
                 />
               </template>

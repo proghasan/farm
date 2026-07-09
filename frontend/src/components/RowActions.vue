@@ -9,10 +9,13 @@ export interface Action<T = any> {
   danger?: boolean;
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   item: Record<string, any>;
   actions: Action[];
-}>();
+  position?: "left" | "center" | "right";
+}>(), {
+  position: "left",
+});
 
 const open = ref(false);
 const menuStyle = ref({ top: "0px", right: "0px" });
@@ -50,7 +53,7 @@ onUnmounted(() => document.removeEventListener("click", close));
 </script>
 
 <template>
-  <div ref="containerRef" class="row-actions relative flex justify-end">
+  <div ref="containerRef" class="row-actions relative flex" :class="position === 'right' ? 'justify-end' : position === 'center' ? 'justify-center' : 'justify-start'">
     <button
       ref="triggerRef"
       @click="toggle"

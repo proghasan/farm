@@ -7,6 +7,7 @@ import {
   deleteSpecies,
 } from "../../api";
 import type { Species } from "../../api";
+import type { Column } from "../../components/DataTable/types";
 import { DataTable } from "../../components/DataTable";
 import RowActions from "../../components/RowActions.vue";
 import Modal from "../../components/Modal.vue";
@@ -85,13 +86,14 @@ async function handleDelete(id: number) {
   }
 }
 
-const columns = [
+const columns: Column[] = [
   { key: "name", label: "Name", sortable: true },
   { key: "created_at", label: "Created At" },
   {
     key: "actions",
     label: "Action",
     component: RowActions,
+    tdPosition: "left",
     componentProps: {
       actions: [
         {
