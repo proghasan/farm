@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import {
   listPregnancies, createPregnancy, updatePregnancy, deletePregnancy,
   listAnimals,
 } from '../../api'
 import type { Pregnancy, Animal } from '../../api'
-import DataTable from '../../components/DataTable.vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
+import StatusBadge from '../../components/StatusBadge.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
 const headerStore = useHeaderStore()
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 
 const items = ref<Pregnancy[]>([])
@@ -35,6 +36,25 @@ const form = ref({
   number_of_female_children: null as number | null,
   number_of_dead_children: null as number | null,
 })
+
+const columns = [
+  { key: 'animal_display', label: 'Animal' },
+  { key: 'mating_date', label: 'Mating Date' },
+  { key: 'expected_due_date', label: 'Due Date' },
+  { key: 'status', label: 'Status', component: StatusBadge },
+  { key: 'number_of_children', label: 'Offspring' },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Edit', icon: 'Pencil', onClick: (item: any) => openEdit(item.id) },
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
 
 const statuses = ['Mated', 'Pregnant', 'Delivered', 'Aborted', 'Miscarriage', 'Failed']
 
@@ -152,17 +172,9 @@ onUnmounted(() => headerStore.clear())
   <div>
     <PageHeader title="Pregnancies" subtitle="Track pregnancy and breeding records" />
     <DataTable
-      :columns="[
-        { key: 'animal_display', label: 'Animal' },
-        { key: 'mating_date', label: 'Mating Date' },
-        { key: 'expected_due_date', label: 'Due Date' },
-        { key: 'status', label: 'Status' },
-        { key: 'number_of_children', label: 'Offspring' },
-      ]"
+      :columns="columns"
       :items="items"
       :loading="loading"
-      @edit="openEdit"
-      @delete="handleDelete"
     >
       <template #cell-animal_display="{ item }">
         {{ item.animal ? `${item.animal.tag_no}${item.animal.name ? ' - ' + item.animal.name : ''}` : '-' }}

@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed} from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { listVaccines, createVaccine, updateVaccine, deleteVaccine, listSpecies } from '../../api'
 import type { Vaccine, Species } from '../../api'
-import DataTable from '../../components/DataTable.vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
 const items = ref<Vaccine[]>([])
@@ -29,6 +29,26 @@ const form = ref({
   interval_unit: 'Day',
   is_repeatable: false,
 })
+
+const columns = [
+  { key: 'name', label: 'Name', sortable: true },
+  { key: 'species_name', label: 'Species' },
+  { key: 'dose', label: 'Dose' },
+  { key: 'minimum_age', label: 'Min Age' },
+  { key: 'interval', label: 'Interval' },
+  { key: 'is_repeatable', label: 'Repeatable' },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Edit', icon: 'Pencil', onClick: (item: any) => openEdit(item.id) },
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
 
 const ageUnits = ['Day', 'Week', 'Month', 'Year']
 
@@ -126,18 +146,9 @@ onUnmounted(() => headerStore.clear())
   <div>
     <PageHeader title="Vaccines" subtitle="Manage vaccine and immunization records" />
     <DataTable
-      :columns="[
-        { key: 'name', label: 'Name' },
-        { key: 'species_name', label: 'Species' },
-        { key: 'dose', label: 'Dose' },
-        { key: 'minimum_age', label: 'Min Age' },
-        { key: 'interval', label: 'Interval' },
-        { key: 'is_repeatable', label: 'Repeatable' },
-      ]"
+      :columns="columns"
       :items="items"
       :loading="loading"
-      @edit="openEdit"
-      @delete="handleDelete"
     >
       <template #cell-species_name="{ item }">
         {{ item.species?.name || '-' }}

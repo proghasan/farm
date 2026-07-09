@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed} from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { listSpecies, createSpecies, updateSpecies, deleteSpecies } from '../../api'
 import type { Species } from '../../api'
-import DataTable from '../../components/DataTable.vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
 const items = ref<(Species & { created_at?: string })[]>([])
@@ -71,6 +71,22 @@ async function handleDelete(id: number) {
   }
 }
 
+const columns = [
+  { key: 'name', label: 'Name', sortable: true },
+  { key: 'created_at', label: 'Created At' },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Edit', icon: 'Pencil', onClick: (item: any) => openEdit(item.id) },
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
+
 onMounted(() => {
   headerStore.setBreadcrumb([{ label: 'Dashboard', to: '/dashboard' }, { label: 'Species' }])
   headerStore.setActions([{ label: 'Add New', onClick: openCreate }])
@@ -84,14 +100,9 @@ onUnmounted(() => headerStore.clear())
   <div>
     <PageHeader title="Species" subtitle="Manage animal species records" />
     <DataTable
-      :columns="[
-        { key: 'name', label: 'Name' },
-        { key: 'created_at', label: 'Created At' },
-      ]"
+      :columns="columns"
       :items="items"
       :loading="loading"
-      @edit="openEdit"
-      @delete="handleDelete"
     >
       <template #cell-created_at="{ item }">
         {{ item.created_at ? new Date(item.created_at).toLocaleDateString() : '-' }}

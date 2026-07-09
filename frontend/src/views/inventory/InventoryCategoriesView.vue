@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed} from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import {
   listInventoryCategories,
   createInventoryCategory,
@@ -7,19 +7,34 @@ import {
   deleteInventoryCategory,
 } from '../../api'
 import type { InventoryCategory } from '../../api'
-import DataTable from '../../components/DataTable.vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
 const categories = ref<InventoryCategory[]>([])
 const loading = ref(false)
 const showModal = ref(false)
 const editingId = ref<number | null>(null)
+const columns = [
+  { key: 'name', label: 'Name', sortable: true },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Edit', icon: 'Pencil', onClick: (item: any) => openEdit(item.id) },
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
+
 const form = ref({ name: '' })
 const saving = ref(false)
 
@@ -89,13 +104,9 @@ onUnmounted(() => headerStore.clear())
   <div>
     <PageHeader title="Inventory Categories" subtitle="Organize inventory items by category" />
     <DataTable
-      :columns="[
-        { key: 'name', label: 'Name' },
-      ]"
+      :columns="columns"
       :items="categories"
       :loading="loading"
-      @edit="openEdit"
-      @delete="handleDelete"
     />
 
     <Modal :show="showModal" :title="editingId ? 'Edit Category' : 'Add Category'" @close="showModal = false" size="sm">

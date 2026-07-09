@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed} from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { listBreeds, createBreed, updateBreed, deleteBreed, listSpecies } from '../../api'
 import type { Breed, Species } from '../../api'
-import DataTable from '../../components/DataTable.vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
 const items = ref<Breed[]>([])
@@ -74,6 +74,22 @@ async function handleDelete(id: number) {
   }
 }
 
+const columns = [
+  { key: 'name', label: 'Name', sortable: true },
+  { key: 'species_name', label: 'Species' },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Edit', icon: 'Pencil', onClick: (item: any) => openEdit(item.id) },
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
+
 onMounted(() => {
   headerStore.setBreadcrumb([{ label: 'Dashboard', to: '/dashboard' }, { label: 'Breeds' }])
   headerStore.setActions([{ label: 'Add New', onClick: openCreate }])
@@ -86,15 +102,10 @@ onUnmounted(() => headerStore.clear())
 <template>
   <div>
     <PageHeader title="Breeds" subtitle="Manage animal breed records" />
-    <DataTable
-      :columns="[
-        { key: 'name', label: 'Name' },
-        { key: 'species_name', label: 'Species' },
-      ]"
+<DataTable
+      :columns="columns"
       :items="items"
       :loading="loading"
-      @edit="openEdit"
-      @delete="handleDelete"
     >
       <template #cell-species_name="{ item }">
         {{ item.species?.name || '-' }}

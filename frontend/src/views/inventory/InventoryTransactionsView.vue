@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed} from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import {
   listInventoryTransactions,
   createInventoryTransaction,
@@ -7,13 +7,13 @@ import {
   listInventoryItems,
 } from '../../api'
 import type { InventoryTransaction, InventoryItem } from '../../api'
-import DataTable from '../../components/DataTable.vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
 const transactions = ref<InventoryTransaction[]>([])
@@ -21,6 +21,24 @@ const items = ref<InventoryItem[]>([])
 const loading = ref(false)
 const showModal = ref(false)
 const saving = ref(false)
+
+const columns = [
+  { key: 'item_name', label: 'Item' },
+  { key: 'transaction_type', label: 'Type' },
+  { key: 'quantity', label: 'Quantity' },
+  { key: 'transaction_date', label: 'Date' },
+  { key: 'remarks', label: 'Remarks' },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
 
 const form = ref({
   inventory_item_id: 0,
@@ -104,16 +122,9 @@ onUnmounted(() => headerStore.clear())
   <div>
     <PageHeader title="Inventory Transactions" subtitle="Track inventory movements and adjustments" />
     <DataTable
-      :columns="[
-        { key: 'item_name', label: 'Item' },
-        { key: 'transaction_type', label: 'Type' },
-        { key: 'quantity', label: 'Quantity' },
-        { key: 'transaction_date', label: 'Date' },
-        { key: 'remarks', label: 'Remarks' },
-      ]"
+      :columns="columns"
       :items="transactions"
       :loading="loading"
-      @delete="handleDelete"
     >
       <template #cell-item_name="{ item }">
         {{ item.inventory_item?.name }}

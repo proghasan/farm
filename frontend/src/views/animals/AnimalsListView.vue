@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
 import {
   listAnimals,
   createAnimal,
@@ -12,16 +13,16 @@ import {
   deleteWeightHistory,
 } from "../../api";
 import type { Animal, Species, Breed, WeightHistory } from "../../api";
-import DataTable from "../../components/DataTable.vue";
+import { DataTable } from "../../components/DataTable";
+import RowActions from "../../components/RowActions.vue";
 import Modal from "../../components/Modal.vue";
 import PageHeader from "../../components/PageHeader.vue";
-import { useRouter } from 'vue-router'
+import AnimalStatusBadge from "../../components/animal/AnimalStatusBadge.vue";
 import { useToast } from "../../composables/useToast";
 import { useHeaderStore } from "../../stores/header";
 
+const router = useRouter();
 const headerStore = useHeaderStore();
-const router = useRouter()
-const searchQuery = computed(() => headerStore.searchQuery);
 const { success, error: showError } = useToast();
 const items = ref<Animal[]>([]);
 const speciesList = ref<Species[]>([]);
@@ -75,6 +76,27 @@ async function fetchData() {
     loading.value = false;
   }
 }
+
+const columns = [
+  { key: "tag_no", label: "Tag No", sortable: true },
+  { key: "name", label: "Name" },
+  { key: "species_name", label: "Species" },
+  { key: "gender", label: "Gender" },
+  { key: "status", label: "Status", component: AnimalStatusBadge },
+  { key: "birth_date", label: "Birth Date" },
+  {
+    key: "actions",
+    label: "Action",
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: "View", icon: "Eye", onClick: (item: any) => router.push("/animals/" + item.id) },
+        { label: "Edit", icon: "Pencil", onClick: (item: any) => openEdit(item.id) },
+        { label: "Delete", icon: "Trash2", onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+];
 
 function openCreate() {
   editingId.value = null;
@@ -194,7 +216,10 @@ async function removeWeight(id: number) {
 }
 
 onMounted(() => {
-  headerStore.setBreadcrumb([{ label: "Dashboard", to: "/dashboard" }, { label: "Animals" }])
+  headerStore.setBreadcrumb([
+    { label: "Dashboard", to: "/dashboard" },
+    { label: "Animals" },
+  ]);
   headerStore.setActions([{ label: "Add New", onClick: openCreate }]);
   headerStore.setShowSearch(true);
   fetchData();
@@ -204,22 +229,11 @@ onUnmounted(() => headerStore.clear());
 
 <template>
   <div>
-    <PageHeader title="Animals" subtitle="Manage livestock and animal records" />
-    <DataTable
-      :columns="[
-        { key: 'tag_no', label: 'Tag No' },
-        { key: 'name', label: 'Name' },
-        { key: 'species_name', label: 'Species' },
-        { key: 'gender', label: 'Gender' },
-        { key: 'status', label: 'Status' },
-        { key: 'birth_date', label: 'Birth Date' },
-      ]"
-      :items="items"
-      :loading="loading"
-      @edit="openEdit"
-      @delete="handleDelete"
-      @row-click="router.push('/animals/' + $event)"
-    >
+    <PageHeader
+      title="Animals"
+      subtitle="Manage livestock and animal records"
+    />
+    <DataTable :columns="columns" :items="items" :loading="loading">
       <template #cell-name="{ item }">
         {{ item.name || "-" }}
       </template>

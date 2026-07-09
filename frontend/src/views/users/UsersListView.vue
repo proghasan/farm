@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted} from 'vue'
-import DataTable from '../../components/DataTable.vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
+import UserStatusBadge from '../../components/user/UserStatusBadge.vue'
 import {
   listUsers,
   createUser,
@@ -13,7 +15,6 @@ import type { User } from '../../api'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
 const items = ref<User[]>([])
@@ -30,6 +31,25 @@ const form = ref({
   role: 'Worker',
   status: 'Active',
 })
+
+const columns = [
+  { key: 'name', label: 'Name', sortable: true },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'role', label: 'Role', component: UserStatusBadge },
+  { key: 'status', label: 'Status', component: UserStatusBadge },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Edit', icon: 'Pencil', onClick: (item: any) => openEdit(item.id) },
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
 
 const modalTitle = computed(() => (editingId.value ? 'Edit User' : 'Add User'))
 
@@ -123,17 +143,9 @@ onUnmounted(() => headerStore.clear())
   <div>
     <PageHeader title="Users" subtitle="Manage system users and permissions" />
     <DataTable
-      :columns="[
-        { key: 'name', label: 'Name' },
-        { key: 'email', label: 'Email' },
-        { key: 'phone', label: 'Phone' },
-        { key: 'role', label: 'Role' },
-        { key: 'status', label: 'Status' },
-      ]"
+      :columns="columns"
       :items="items"
       :loading="loading"
-      @edit="openEdit"
-      @delete="handleDelete"
     >
       <template #cell-email="{ item }">
         {{ item.email || '-' }}

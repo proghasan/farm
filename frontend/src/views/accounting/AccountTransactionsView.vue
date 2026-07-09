@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed} from 'vue'
-import DataTable from '../../components/DataTable.vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import {
@@ -13,7 +14,6 @@ import type { AccountTransaction, AccountHead } from '../../api'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
 const items = ref<AccountTransaction[]>([])
@@ -21,6 +21,25 @@ const accountHeads = ref<AccountHead[]>([])
 const loading = ref(false)
 const showModal = ref(false)
 const saving = ref(false)
+
+const columns = [
+  { key: 'transaction_date', label: 'Date' },
+  { key: 'account_head_name', label: 'Account Head' },
+  { key: 'amount', label: 'Amount ($)' },
+  { key: 'payment_method', label: 'Payment Method' },
+  { key: 'reference_no', label: 'Reference' },
+  { key: 'description', label: 'Description' },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
 
 const form = ref({
   account_head_id: 0,
@@ -107,17 +126,9 @@ onUnmounted(() => headerStore.clear())
   <div>
     <PageHeader title="Account Transactions" subtitle="Record and manage financial transactions" />
     <DataTable
-      :columns="[
-        { key: 'transaction_date', label: 'Date' },
-        { key: 'account_head_name', label: 'Account Head' },
-        { key: 'amount', label: 'Amount ($)' },
-        { key: 'payment_method', label: 'Payment Method' },
-        { key: 'reference_no', label: 'Reference' },
-        { key: 'description', label: 'Description' },
-      ]"
+      :columns="columns"
       :items="items"
       :loading="loading"
-      @delete="handleDelete"
     >
       <template #cell-transaction_date="{ item }">
         {{ item.transaction_date ? new Date(item.transaction_date).toLocaleDateString() : '-' }}

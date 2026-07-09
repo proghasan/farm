@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed} from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { listVaccinations, createVaccination, deleteVaccination, listAnimals, listVaccines } from '../../api'
 import type { Vaccination, Animal, Vaccine } from '../../api'
-import DataTable from '../../components/DataTable.vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
 const items = ref<Vaccination[]>([])
@@ -17,6 +17,24 @@ const vaccineList = ref<Vaccine[]>([])
 const loading = ref(false)
 const showModal = ref(false)
 const saving = ref(false)
+
+const columns = [
+  { key: 'animal_display', label: 'Animal' },
+  { key: 'vaccine_name', label: 'Vaccine' },
+  { key: 'vaccination_date', label: 'Date' },
+  { key: 'next_due_date', label: 'Due Date' },
+  { key: 'doctor_name', label: 'Doctor' },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
 
 const form = ref({
   animal_id: null as number | null,
@@ -99,16 +117,9 @@ onUnmounted(() => headerStore.clear())
   <div>
     <PageHeader title="Vaccinations" subtitle="Track vaccination history for animals" />
     <DataTable
-      :columns="[
-        { key: 'animal_display', label: 'Animal' },
-        { key: 'vaccine_name', label: 'Vaccine' },
-        { key: 'vaccination_date', label: 'Date' },
-        { key: 'next_due_date', label: 'Due Date' },
-        { key: 'doctor_name', label: 'Doctor' },
-      ]"
+      :columns="columns"
       :items="items"
       :loading="loading"
-      @delete="handleDelete"
     >
       <template #cell-animal_display="{ item }">
         {{ item.animal ? `${item.animal.tag_no}${item.animal.name ? ' - ' + item.animal.name : ''}` : '-' }}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed} from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import {
   listInventoryItems,
   createInventoryItem,
@@ -8,13 +8,13 @@ import {
   listInventoryCategories,
 } from '../../api'
 import type { InventoryItem, InventoryCategory } from '../../api'
-import DataTable from '../../components/DataTable.vue'
+import { DataTable } from '../../components/DataTable'
+import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
-const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
 const items = ref<InventoryItem[]>([])
@@ -23,6 +23,26 @@ const loading = ref(false)
 const showModal = ref(false)
 const editingId = ref<number | null>(null)
 const saving = ref(false)
+
+const columns = [
+  { key: 'name', label: 'Name', sortable: true },
+  { key: 'category_name', label: 'Category' },
+  { key: 'sku', label: 'SKU' },
+  { key: 'unit', label: 'Unit' },
+  { key: 'purchase_price', label: 'Purchase Price' },
+  { key: 'selling_price', label: 'Selling Price' },
+  {
+    key: 'actions',
+    label: '',
+    component: RowActions,
+    componentProps: {
+      actions: [
+        { label: 'Edit', icon: 'Pencil', onClick: (item: any) => openEdit(item.id) },
+        { label: 'Delete', icon: 'Trash2', onClick: (item: any) => handleDelete(item.id), danger: true },
+      ],
+    },
+  },
+]
 
 const form = ref({
   category_id: 0,
@@ -111,18 +131,9 @@ onUnmounted(() => headerStore.clear())
   <div>
     <PageHeader title="Inventory Items" subtitle="Manage stock items and pricing" />
     <DataTable
-      :columns="[
-        { key: 'name', label: 'Name' },
-        { key: 'category_name', label: 'Category' },
-        { key: 'sku', label: 'SKU' },
-        { key: 'unit', label: 'Unit' },
-        { key: 'purchase_price', label: 'Purchase Price' },
-        { key: 'selling_price', label: 'Selling Price' },
-      ]"
+      :columns="columns"
       :items="items"
       :loading="loading"
-      @edit="openEdit"
-      @delete="handleDelete"
     >
       <template #cell-category_name="{ item }">
         {{ item.category?.name }}
