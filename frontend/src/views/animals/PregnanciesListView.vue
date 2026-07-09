@@ -10,6 +10,7 @@ import RowActions from '../../components/RowActions.vue'
 import StatusBadge from '../../components/StatusBadge.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
+import DateDisplay from '../../components/DateDisplay.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
@@ -180,10 +181,10 @@ onUnmounted(() => headerStore.clear())
         {{ item.animal?.tag_no || '-' }}
       </template>
       <template #cell-mating_date="{ item }">
-        {{ item.mating_date ? new Date(item.mating_date).toLocaleDateString() : '-' }}
+        <DateDisplay :value="item.mating_date" />
       </template>
       <template #cell-expected_due_date="{ item }">
-        {{ item.expected_due_date ? new Date(item.expected_due_date).toLocaleDateString() : '-' }}
+        <DateDisplay :value="item.expected_due_date" />
       </template>
       <template #cell-number_of_children="{ item }">
         {{ item.number_of_children ?? '-' }}

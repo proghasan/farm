@@ -6,6 +6,7 @@ import { DataTable } from '../../components/DataTable'
 import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
+import DateDisplay from '../../components/DateDisplay.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
@@ -128,10 +129,10 @@ onUnmounted(() => headerStore.clear())
         {{ item.vaccine?.name || '-' }}
       </template>
       <template #cell-vaccination_date="{ item }">
-        {{ item.vaccination_date ? new Date(item.vaccination_date).toLocaleDateString() : '-' }}
+        <DateDisplay :value="item.vaccination_date" />
       </template>
       <template #cell-next_due_date="{ item }">
-        {{ item.next_due_date ? new Date(item.next_due_date).toLocaleDateString() : '-' }}
+        <DateDisplay :value="item.next_due_date" />
       </template>
       <template #cell-doctor_name="{ item }">
         {{ item.doctor_name || '-' }}

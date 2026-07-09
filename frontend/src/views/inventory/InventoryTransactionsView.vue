@@ -11,6 +11,7 @@ import { DataTable } from '../../components/DataTable'
 import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
+import DateDisplay from '../../components/DateDisplay.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
@@ -49,11 +50,6 @@ const form = ref({
 })
 
 const transactionTypes = ['Purchase', 'Sale', 'Consumption', 'Adjustment', 'Return', 'Damage']
-
-function formatDate(d: string) {
-  if (!d) return ''
-  return new Date(d).toLocaleDateString()
-}
 
 function today() {
   return new Date().toISOString().slice(0, 10)
@@ -130,7 +126,7 @@ onUnmounted(() => headerStore.clear())
         {{ item.inventory_item?.name }}
       </template>
       <template #cell-transaction_date="{ item }">
-        {{ formatDate(item.transaction_date) }}
+        <DateDisplay :value="item.transaction_date" />
       </template>
       <template #cell-remarks="{ item }">
         {{ item.remarks || '-' }}

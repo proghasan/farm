@@ -5,6 +5,7 @@ import { getAnimalProfile, deleteWeightHistory } from '../../api'
 import type { Animal, Pregnancy } from '../../api'
 import PageHeader from '../../components/PageHeader.vue'
 import Modal from '../../components/Modal.vue'
+import DateDisplay from '../../components/DateDisplay.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
 
@@ -45,10 +46,6 @@ async function deleteWeight(id: number) {
   } catch (e: any) {
     showError('Failed', e?.response?.data?.message || 'An error occurred')
   }
-}
-
-function formatDate(d?: string) {
-  return d ? new Date(d).toLocaleDateString() : '-'
 }
 
 function statusBadge(status?: string) {
@@ -107,8 +104,8 @@ onUnmounted(() => headerStore.clear())
         <div class="flex justify-between"><span class="text-sm text-gray-500">Tag No</span><span class="text-sm font-medium text-gray-900">{{ animal.tag_no }}</span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Species</span><span class="text-sm font-medium text-gray-900">{{ animal.species?.name || '-' }}</span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Breed</span><span class="text-sm font-medium text-gray-900">{{ animal.breed?.name || '-' }}</span></div>
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Birth Date</span><span class="text-sm font-medium text-gray-900">{{ formatDate(animal.birth_date) }}</span></div>
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Purchase Date</span><span class="text-sm font-medium text-gray-900">{{ formatDate(animal.purchase_date) }}</span></div>
+        <div class="flex justify-between"><span class="text-sm text-gray-500">Birth Date</span><span class="text-sm font-medium text-gray-900"><DateDisplay :value="animal.birth_date" /></span></div>
+        <div class="flex justify-between"><span class="text-sm text-gray-500">Purchase Date</span><span class="text-sm font-medium text-gray-900"><DateDisplay :value="animal.purchase_date" /></span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Purchase Price</span><span class="text-sm font-medium text-gray-900">${{ Number(animal.purchase_price).toFixed(2) }}</span></div>
         <div class="flex justify-between"><span class="text-sm text-gray-500">Color</span><span class="text-sm font-medium text-gray-900">{{ animal.color || '-' }}</span></div>
         <div v-if="animal.father" class="flex justify-between col-span-2"><span class="text-sm text-gray-500">Father</span><span class="text-sm font-medium text-gray-900">{{ animal.father.tag_no }}</span></div>
@@ -138,7 +135,7 @@ onUnmounted(() => headerStore.clear())
             <tr v-if="!animal.weight_histories?.length"><td colspan="4" class="px-3 py-8 text-center text-gray-400">No weight records.</td></tr>
             <tr v-for="w in animal.weight_histories" :key="w.id">
               <td class="px-3 py-2">{{ w.weight }} kg</td>
-              <td class="px-3 py-2">{{ formatDate(w.record_date) }}</td>
+              <td class="px-3 py-2"><DateDisplay :value="w.record_date" /></td>
               <td class="px-3 py-2">{{ w.remarks || '-' }}</td>
               <td class="px-3 py-2 text-right"><button @click="deleteWeight(w.id)" class="text-xs font-medium text-red-500 hover:text-red-600">Delete</button></td>
             </tr>
@@ -157,8 +154,8 @@ onUnmounted(() => headerStore.clear())
             <tr v-if="!animal.vaccinations?.length"><td colspan="4" class="px-3 py-8 text-center text-gray-400">No vaccination records.</td></tr>
             <tr v-for="v in animal.vaccinations" :key="v.id">
               <td class="px-3 py-2">{{ v.vaccine?.name || '-' }}</td>
-              <td class="px-3 py-2">{{ formatDate(v.vaccination_date) }}</td>
-              <td class="px-3 py-2">{{ formatDate(v.next_due_date) }}</td>
+              <td class="px-3 py-2"><DateDisplay :value="v.vaccination_date" /></td>
+              <td class="px-3 py-2"><DateDisplay :value="v.next_due_date" /></td>
               <td class="px-3 py-2">{{ v.doctor_name || '-' }}</td>
             </tr>
           </tbody>
@@ -175,8 +172,8 @@ onUnmounted(() => headerStore.clear())
           <tbody class="divide-y divide-gray-50">
             <tr v-if="!pregnancies.length"><td colspan="5" class="px-3 py-8 text-center text-gray-400">No pregnancy records.</td></tr>
             <tr v-for="p in pregnancies" :key="p.id">
-              <td class="px-3 py-2">{{ formatDate(p.mating_date) }}</td>
-              <td class="px-3 py-2">{{ formatDate(p.expected_due_date) }}</td>
+              <td class="px-3 py-2"><DateDisplay :value="p.mating_date" /></td>
+              <td class="px-3 py-2"><DateDisplay :value="p.expected_due_date" /></td>
               <td class="px-3 py-2"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ring-1" :class="p.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : p.status === 'Pregnant' ? 'bg-blue-50 text-blue-700 ring-blue-200' : 'bg-gray-50 text-gray-600 ring-gray-200'">{{ p.status }}</span></td>
               <td class="px-3 py-2">{{ p.number_of_children ?? '-' }}</td>
               <td class="px-3 py-2">{{ p.breeder?.tag_no || '-' }}</td>

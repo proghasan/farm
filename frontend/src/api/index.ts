@@ -171,6 +171,7 @@ export const getProfile = () => api.get<User>('/users/profile').then(r => r.data
 
 // Species
 export const listSpecies = () => api.get<{ data: Species[] }>('/species').then(r => r.data.data)
+export const listSpeciesPaginated = (params?: Record<string, any>) => api.get<PaginatedResponse<Species>>('/species', { params }).then(r => r.data)
 export const getSpecies = (id: number) => api.get<Species>(`/species/${id}`).then(r => r.data)
 export const createSpecies = (data: Partial<Species>) => api.post('/species', data)
 export const updateSpecies = (id: number, data: Partial<Species>) => api.put(`/species/${id}`, data)

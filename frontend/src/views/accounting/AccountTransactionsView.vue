@@ -4,6 +4,7 @@ import { DataTable } from '../../components/DataTable'
 import RowActions from '../../components/RowActions.vue'
 import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
+import DateDisplay from '../../components/DateDisplay.vue'
 import {
   listAccountTransactions,
   createAccountTransaction,
@@ -131,7 +132,7 @@ onUnmounted(() => headerStore.clear())
       :loading="loading"
     >
       <template #cell-transaction_date="{ item }">
-        {{ item.transaction_date ? new Date(item.transaction_date).toLocaleDateString() : '-' }}
+        <DateDisplay :value="item.transaction_date" />
       </template>
       <template #cell-account_head_name="{ item }">
         {{ headName(item) }}

@@ -17,6 +17,7 @@ import { DataTable } from "../../components/DataTable";
 import RowActions from "../../components/RowActions.vue";
 import Modal from "../../components/Modal.vue";
 import PageHeader from "../../components/PageHeader.vue";
+import DateDisplay from "../../components/DateDisplay.vue";
 import AnimalStatusBadge from "../../components/animal/AnimalStatusBadge.vue";
 import { useToast } from "../../composables/useToast";
 import { useHeaderStore } from "../../stores/header";
@@ -247,9 +248,7 @@ onUnmounted(() => headerStore.clear());
         {{ item.species?.name || "-" }}
       </template>
       <template #cell-birth_date="{ item }">
-        {{
-          item.birth_date ? new Date(item.birth_date).toLocaleDateString() : "-"
-        }}
+        <DateDisplay :value="item.birth_date" />
       </template>
     </DataTable>
 
@@ -462,11 +461,7 @@ onUnmounted(() => headerStore.clear());
                 <tr v-for="w in weightHistoriesForAnimal" :key="w.id">
                   <td class="px-3 py-2">{{ w.weight }} kg</td>
                   <td class="px-3 py-2">
-                    {{
-                      w.record_date
-                        ? new Date(w.record_date).toLocaleDateString()
-                        : "-"
-                    }}
+<DateDisplay :value="w.record_date" />
                   </td>
                   <td class="px-3 py-2">{{ w.remarks || "-" }}</td>
                   <td class="px-3 py-2 text-right">
