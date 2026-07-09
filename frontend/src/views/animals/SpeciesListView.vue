@@ -183,17 +183,17 @@ onUnmounted(() => headerStore.clear());
       </form>
       <template #footer>
         <button
-          @click="showModal = false"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-        <button
           @click="save"
           :disabled="saving"
           class="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-xl hover:bg-brand-700 disabled:opacity-50"
         >
           {{ saving ? "Saving..." : "Save" }}
+        </button>
+        <button
+          @click="showModal = false"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50"
+        >
+          Cancel
         </button>
       </template>
     </Drawer>

@@ -11,7 +11,7 @@ import (
 
 func ListSpecies(c fiber.Ctx, db *gorm.DB) error {
 	var species []models.Species
-	tx := db.Model(&models.Species{}).Preload("User")
+	tx := db.Model(&models.Species{}).Preload("User").Order("id desc")
 	if s := c.Query("search"); s != "" {
 		tx = tx.Where("name LIKE ?", "%"+s+"%")
 	}

@@ -18,6 +18,10 @@ go.work
 # Env files
 .env
 
+# air hot reload
+tmp/
+build-errors.log
+
 # IDE
 .idea/
 .vscode/
