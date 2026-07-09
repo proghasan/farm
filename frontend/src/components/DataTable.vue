@@ -117,32 +117,6 @@ function clearFilters() {
 
 <template>
   <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-    <!-- Toolbar -->
-    <div v-if="searchable" class="p-4 border-b border-gray-100">
-      <div class="relative">
-        <svg
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-          />
-        </svg>
-        <input
-          v-model="search"
-          @input="currentPage = 1"
-          type="text"
-          placeholder="Search…"
-          class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-brand-200 focus:border-brand-400 text-sm outline-none transition-all"
-        />
-      </div>
-    </div>
-
     <!-- Table -->
     <div class="overflow-x-auto">
       <table class="w-full">

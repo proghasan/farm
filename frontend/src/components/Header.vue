@@ -3,6 +3,9 @@ import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import Avatar from "./Avatar.vue";
+import SearchBar from "./SearchBar.vue";
+import Breadcrumb from "./Breadcrumb.vue";
+import { useHeaderStore } from "../stores/header";
 
 defineProps<{
   title: string;
@@ -12,6 +15,7 @@ defineProps<{
 defineEmits<{ toggleSidebar: [] }>();
 
 const auth = useAuthStore();
+const headerStore = useHeaderStore();
 const router = useRouter();
 
 const avatarOpen = ref(false);
@@ -37,11 +41,23 @@ onUnmounted(() => document.removeEventListener("click", closeAll));
     class="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 shrink-0 z-20"
   >
     <div class="flex items-center gap-3">
-      <h1 class="text-lg font-semibold text-gray-900">{{ title }}</h1>
-      <nav class="hidden sm:flex items-center gap-1 text-sm text-gray-400">
-        <span>Farm</span>
+      <Breadcrumb v-if="headerStore.breadcrumb.length" :items="headerStore.breadcrumb" />
+      <h1 v-else class="text-lg font-semibold text-gray-900">{{ title }}</h1>
+    </div>
+
+    <div class="flex-1 flex items-center justify-center gap-3">
+      <SearchBar
+        v-if="headerStore.showSearch"
+        v-model="headerStore.searchQuery"
+      />
+      <button
+        v-for="action in headerStore.actions"
+        :key="action.label"
+        @click="action.onClick"
+        class="w-9 h-9 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 border border-gray-200 rounded-full transition-colors"
+      >
         <svg
-          class="w-3.5 h-3.5"
+          class="w-5 h-5"
           fill="none"
           viewBox="0 0 24 24"
           stroke-width="2"
@@ -50,42 +66,13 @@ onUnmounted(() => document.removeEventListener("click", closeAll));
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="m8.25 4.5 7.5 7.5-7.5 7.5"
+            d="M12 4.5v15m7.5-7.5h-15"
           />
         </svg>
-        <span class="text-gray-700 font-medium">{{ title }}</span>
-      </nav>
+      </button>
     </div>
 
     <div class="flex items-center gap-2">
-      <!-- Search -->
-      <div
-        class="hidden md:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-56 focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-400 transition-all"
-      >
-        <svg
-          class="w-4 h-4 text-gray-400 shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-          />
-        </svg>
-        <input
-          type="text"
-          placeholder="Search…"
-          class="bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none w-full"
-        />
-        <kbd
-          class="text-xs text-gray-400 bg-white border border-gray-200 rounded px-1.5 py-0.5 font-mono"
-          >⌘K</kbd
-        >
-      </div>
-
       <!-- Settings -->
       <button
         class="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"

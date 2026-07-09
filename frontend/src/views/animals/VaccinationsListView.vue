@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed} from 'vue'
 import { listVaccinations, createVaccination, deleteVaccination, listAnimals, listVaccines } from '../../api'
 import type { Vaccination, Animal, Vaccine } from '../../api'
 import DataTable from '../../components/DataTable.vue'
 import Modal from '../../components/Modal.vue'
+import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
+import { useHeaderStore } from '../../stores/header'
 
+const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
-
+const headerStore = useHeaderStore()
 const items = ref<Vaccination[]>([])
 const animalList = ref<Animal[]>([])
 const vaccineList = ref<Vaccine[]>([])
@@ -83,19 +86,18 @@ async function handleDelete(id: number) {
   }
 }
 
-onMounted(fetchData)
+onMounted(() => {
+  headerStore.setBreadcrumb([{ label: 'Dashboard', to: '/dashboard' }, { label: 'Vaccinations' }])
+  headerStore.setActions([{ label: 'Add New', onClick: openCreate }])
+  headerStore.setShowSearch(true)
+  fetchData()
+})
+onUnmounted(() => headerStore.clear())
 </script>
 
 <template>
   <div>
-    <div class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Vaccinations</h1>
-        <p class="text-sm text-gray-500">Track vaccination records</p>
-      </div>
-      <button @click="openCreate" class="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl transition-colors">Add New</button>
-    </div>
-
+    <PageHeader title="Vaccinations" subtitle="Track vaccination history for animals" />
     <DataTable
       :columns="[
         { key: 'animal_display', label: 'Animal' },

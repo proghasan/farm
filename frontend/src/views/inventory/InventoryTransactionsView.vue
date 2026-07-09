@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed} from 'vue'
 import {
   listInventoryTransactions,
   createInventoryTransaction,
@@ -9,10 +9,13 @@ import {
 import type { InventoryTransaction, InventoryItem } from '../../api'
 import DataTable from '../../components/DataTable.vue'
 import Modal from '../../components/Modal.vue'
+import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
+import { useHeaderStore } from '../../stores/header'
 
+const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
-
+const headerStore = useHeaderStore()
 const transactions = ref<InventoryTransaction[]>([])
 const items = ref<InventoryItem[]>([])
 const loading = ref(false)
@@ -88,19 +91,18 @@ async function handleDelete(id: number) {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  headerStore.setBreadcrumb([{ label: 'Dashboard', to: '/dashboard' }, { label: 'Inventory Transactions' }])
+  headerStore.setActions([{ label: 'Add New', onClick: openCreate }])
+  headerStore.setShowSearch(true)
+  load()
+})
+onUnmounted(() => headerStore.clear())
 </script>
 
 <template>
   <div>
-    <div class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Inventory Transactions</h1>
-        <p class="text-sm text-gray-500">Record inventory movements</p>
-      </div>
-      <button @click="openCreate" class="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl transition-colors">Add New</button>
-    </div>
-
+    <PageHeader title="Inventory Transactions" subtitle="Track inventory movements and adjustments" />
     <DataTable
       :columns="[
         { key: 'item_name', label: 'Item' },

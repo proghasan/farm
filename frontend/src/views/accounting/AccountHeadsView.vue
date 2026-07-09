@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted} from 'vue'
 import DataTable from '../../components/DataTable.vue'
 import Modal from '../../components/Modal.vue'
+import PageHeader from '../../components/PageHeader.vue'
 import {
   listAccountHeads,
   createAccountHead,
@@ -10,9 +11,11 @@ import {
 } from '../../api'
 import type { AccountHead } from '../../api'
 import { useToast } from '../../composables/useToast'
+import { useHeaderStore } from '../../stores/header'
 
+const searchQuery = computed(() => headerStore.searchQuery)
 const { success, error: showError } = useToast()
-
+const headerStore = useHeaderStore()
 const items = ref<AccountHead[]>([])
 const loading = ref(false)
 const showModal = ref(false)
@@ -81,19 +84,18 @@ async function handleDelete(id: number) {
   }
 }
 
-onMounted(fetchItems)
+onMounted(() => {
+  headerStore.setBreadcrumb([{ label: 'Dashboard', to: '/dashboard' }, { label: 'Account Heads' }])
+  headerStore.setActions([{ label: 'Add New', onClick: openCreate }])
+  headerStore.setShowSearch(true)
+  fetchItems()
+})
+onUnmounted(() => headerStore.clear())
 </script>
 
 <template>
   <div>
-    <div class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Account Heads</h1>
-        <p class="text-sm text-gray-500">Manage income and expense categories</p>
-      </div>
-      <button @click="openCreate" class="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl transition-colors">Add New</button>
-    </div>
-
+    <PageHeader title="Account Heads" subtitle="Manage income and expense categories" />
     <DataTable
       :columns="[
         { key: 'type', label: 'Type' },
