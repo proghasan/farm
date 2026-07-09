@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
+import { watchDebounced } from "@vueuse/core";
 import {
   listSpeciesPaginated,
   createSpecies,
@@ -34,6 +35,7 @@ async function fetchData() {
     const result = await listSpeciesPaginated({
       page: page.value,
       per_page: pageSize.value,
+      search: headerStore.searchQuery || undefined,
     });
     items.value = result.data as (Species & { created_at?: string })[];
     totalItems.value = result.total;
@@ -41,6 +43,15 @@ async function fetchData() {
     loading.value = false;
   }
 }
+
+watchDebounced(
+  () => headerStore.searchQuery,
+  () => {
+    page.value = 1;
+    fetchData();
+  },
+  { debounce: 300, maxWait: 1000 },
+);
 
 function openCreate() {
   editingId.value = null;
