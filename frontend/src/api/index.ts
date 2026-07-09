@@ -41,6 +41,8 @@ export interface Animal {
   name?: string
   species_id: number
   breed_id?: number
+  father_id?: number
+  mother_id?: number
   gender: string
   birth_date?: string
   purchase_date?: string
@@ -51,6 +53,12 @@ export interface Animal {
   remarks?: string
   species?: Species
   breed?: Breed
+  father?: Animal
+  mother?: Animal
+  weight_histories?: WeightHistory[]
+  vaccinations?: Vaccination[]
+  pregnancies?: Pregnancy[]
+  sired_pregnancies?: Pregnancy[]
 }
 
 export interface Vaccine {
@@ -132,6 +140,24 @@ export interface WeightHistory {
   animal?: Animal
 }
 
+export interface Pregnancy {
+  id: number
+  animal_id: number
+  breeder_id?: number
+  mating_date: string
+  expected_due_date: string
+  actual_birth_date?: string
+  status: string
+  note?: string
+  number_of_children?: number
+  number_of_male_children?: number
+  number_of_female_children?: number
+  number_of_dead_children?: number
+  created_at: string
+  animal?: Animal
+  breeder?: Animal
+}
+
 // Auth
 export const login = (data: AuthPayload) => api.post<LoginResponse>('/auth/login', data).then(r => r.data)
 export const getProfile = () => api.get<User>('/users/profile').then(r => r.data)
@@ -152,6 +178,7 @@ export const deleteBreed = (id: number) => api.delete(`/breeds/${id}`)
 // Animals
 export const listAnimals = (params?: Record<string, any>) => api.get<{ data: Animal[] }>('/animals', { params }).then(r => r.data.data)
 export const getAnimal = (id: number) => api.get<Animal>(`/animals/${id}`).then(r => r.data)
+export const getAnimalProfile = (id: number) => api.get<{ animal: Animal; pregnancies: Pregnancy[] }>(`/animals/${id}/profile`).then(r => r.data)
 export const createAnimal = (data: Partial<Animal>) => api.post('/animals', data)
 export const updateAnimal = (id: number, data: Partial<Animal>) => api.put(`/animals/${id}`, data)
 export const deleteAnimal = (id: number) => api.delete(`/animals/${id}`)
@@ -205,6 +232,13 @@ export const listUsers = () => api.get<{ data: User[] }>('/users').then(r => r.d
 export const createUser = (data: Partial<User>) => api.post('/users', data)
 export const updateUser = (id: number, data: Partial<User>) => api.put(`/users/${id}`, data)
 export const deleteUser = (id: number) => api.delete(`/users/${id}`)
+
+// Pregnancies
+export const listPregnancies = () => api.get<{ data: Pregnancy[] }>('/pregnancies').then(r => r.data.data)
+export const getPregnancy = (id: number) => api.get<Pregnancy>(`/pregnancies/${id}`).then(r => r.data)
+export const createPregnancy = (data: Partial<Pregnancy>) => api.post('/pregnancies', data)
+export const updatePregnancy = (id: number, data: Partial<Pregnancy>) => api.put(`/pregnancies/${id}`, data)
+export const deletePregnancy = (id: number) => api.delete(`/pregnancies/${id}`)
 
 // Dashboard stats
 export const getDashboardStats = () =>

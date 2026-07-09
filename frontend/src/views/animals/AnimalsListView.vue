@@ -15,10 +15,12 @@ import type { Animal, Species, Breed, WeightHistory } from "../../api";
 import DataTable from "../../components/DataTable.vue";
 import Modal from "../../components/Modal.vue";
 import PageHeader from "../../components/PageHeader.vue";
+import { useRouter } from 'vue-router'
 import { useToast } from "../../composables/useToast";
 import { useHeaderStore } from "../../stores/header";
 
 const headerStore = useHeaderStore();
+const router = useRouter()
 const searchQuery = computed(() => headerStore.searchQuery);
 const { success, error: showError } = useToast();
 const items = ref<Animal[]>([]);
@@ -216,6 +218,7 @@ onUnmounted(() => headerStore.clear());
       :loading="loading"
       @edit="openEdit"
       @delete="handleDelete"
+      @row-click="router.push('/animals/' + $event)"
     >
       <template #cell-name="{ item }">
         {{ item.name || "-" }}

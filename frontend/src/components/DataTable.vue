@@ -25,6 +25,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   edit: [id: number];
   delete: [id: number];
+  rowClick: [id: number];
 }>();
 
 const search = ref("");
@@ -217,6 +218,20 @@ function clearFilters() {
                     v-if="openMenuId === item.id"
                     class="absolute right-0 top-8 w-40 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-20"
                   >
+                    <button
+                      @click="
+                        emit('rowClick', item.id);
+                        openMenuId = null;
+                      "
+                      class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    >
+                      <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                      </svg>
+                      View
+                    </button>
+                    <div class="border-t border-gray-100 mx-2" />
                     <button
                       @click="
                         emit('edit', item.id);

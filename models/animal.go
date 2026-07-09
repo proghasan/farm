@@ -12,6 +12,8 @@ type Animal struct {
 	Name          *string        `gorm:"size:150" json:"name,omitempty"`
 	SpeciesID     uint           `gorm:"not null" json:"species_id" validate:"required"`
 	BreedID       *uint          `json:"breed_id,omitempty"`
+	FatherID      *uint          `json:"father_id,omitempty"`
+	MotherID      *uint          `json:"mother_id,omitempty"`
 	Gender        string         `gorm:"size:10;not null" json:"gender" validate:"required,oneof=Male Female"`
 	BirthDate     *string        `json:"birth_date,omitempty"`
 	PurchaseDate  *string        `json:"purchase_date,omitempty"`
@@ -28,6 +30,8 @@ type Animal struct {
 
 	Species           Species              `gorm:"foreignKey:SpeciesID" json:"species,omitempty"`
 	Breed             *Breed               `gorm:"foreignKey:BreedID" json:"breed,omitempty"`
+	Father            *Animal              `gorm:"foreignKey:FatherID" json:"father,omitempty"`
+	Mother            *Animal              `gorm:"foreignKey:MotherID" json:"mother,omitempty"`
 	WeightHistories   []AnimalWeightHistory `gorm:"foreignKey:AnimalID" json:"weight_histories,omitempty"`
 	AnimalVaccinations []AnimalVaccination  `gorm:"foreignKey:AnimalID" json:"vaccinations,omitempty"`
 }

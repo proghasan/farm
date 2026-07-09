@@ -51,5 +51,6 @@ func Migrate() {
 		&models.InventoryTransaction{},
 		&models.AccountHead{},
 		&models.AccountTransaction{},
+		&models.AnimalPregnancy{},
 	)
 }

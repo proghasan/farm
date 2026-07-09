@@ -54,6 +54,7 @@ func Setup(app *fiber.App, cfg *config.Config) {
 	animals := api.Group("/animals")
 	animals.Get("/", wrapH(handlers.ListAnimals))
 	animals.Get("/:id", wrapH(handlers.GetAnimal))
+	animals.Get("/:id/profile", wrapH(handlers.GetAnimalProfile))
 	animals.Post("/", wrapH(handlers.CreateAnimal))
 	animals.Put("/:id", wrapH(handlers.UpdateAnimal))
 	animals.Delete("/:id", wrapH(handlers.DeleteAnimal))
@@ -121,6 +122,14 @@ func Setup(app *fiber.App, cfg *config.Config) {
 	acctTxns.Post("/", wrapH(handlers.CreateAccountTransaction))
 	acctTxns.Put("/:id", wrapH(handlers.UpdateAccountTransaction))
 	acctTxns.Delete("/:id", wrapH(handlers.DeleteAccountTransaction))
+
+	// Pregnancies
+	pregnancies := api.Group("/pregnancies")
+	pregnancies.Get("/", wrapH(handlers.ListPregnancies))
+	pregnancies.Get("/:id", wrapH(handlers.GetPregnancy))
+	pregnancies.Post("/", wrapH(handlers.CreatePregnancy))
+	pregnancies.Put("/:id", wrapH(handlers.UpdatePregnancy))
+	pregnancies.Delete("/:id", wrapH(handlers.DeletePregnancy))
 }
 
 func wrapH(fn func(c fiber.Ctx, db *gorm.DB) error) fiber.Handler {
