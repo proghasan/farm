@@ -3,6 +3,7 @@ package handlers
 import (
 	"farm/middleware"
 	"farm/models"
+	speciesreq "farm/requests/species"
 
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
@@ -10,7 +11,7 @@ import (
 
 func ListSpecies(c fiber.Ctx, db *gorm.DB) error {
 	var species []models.Species
-	tx := db.Model(&models.Species{}).Preload("Breeds")
+	tx := db.Model(&models.Species{}).Preload("User")
 	if s := c.Query("search"); s != "" {
 		tx = tx.Where("name LIKE ?", "%"+s+"%")
 	}
@@ -27,9 +28,12 @@ func GetSpecies(c fiber.Ctx, db *gorm.DB) error {
 }
 
 func CreateSpecies(c fiber.Ctx, db *gorm.DB) error {
-	var species models.Species
-	if err := validateBody(c, &species); err != nil {
-		return err
+	var req speciesreq.CreateSpeciesRequest
+	if err := req.FromContext(c); err != nil {
+		return nil
+	}
+	species := models.Species{
+		Name: req.Name,
 	}
 	species.CreatedBy = middleware.GetUserID(c)
 	species.UpdatedBy = middleware.GetUserID(c)
@@ -45,14 +49,15 @@ func UpdateSpecies(c fiber.Ctx, db *gorm.DB) error {
 	if err := db.First(&species, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Species not found"})
 	}
-	var input models.Species
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req speciesreq.UpdateSpeciesRequest
+	if err := req.FromContext(c); err != nil {
+		return nil
 	}
-	input.ID = species.ID
-	input.CreatedBy = species.CreatedBy
-	input.UpdatedBy = middleware.GetUserID(c)
-	db.Model(&species).Updates(input)
+	species.Name = req.Name
+	species.UpdatedBy = middleware.GetUserID(c)
+	if err := db.Save(&species).Error; err != nil {
+		return handleError(c, err)
+	}
 	return c.JSON(species)
 }
 

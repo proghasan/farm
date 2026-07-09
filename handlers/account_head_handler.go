@@ -29,7 +29,7 @@ func GetAccountHead(c fiber.Ctx, db *gorm.DB) error {
 func CreateAccountHead(c fiber.Ctx, db *gorm.DB) error {
 	var head models.AccountHead
 	if err := validateBody(c, &head); err != nil {
-		return err
+		return nil
 	}
 	head.CreatedBy = middleware.GetUserID(c)
 	head.UpdatedBy = middleware.GetUserID(c)

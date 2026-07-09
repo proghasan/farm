@@ -32,7 +32,7 @@ func GetAccountTransaction(c fiber.Ctx, db *gorm.DB) error {
 func CreateAccountTransaction(c fiber.Ctx, db *gorm.DB) error {
 	var txn models.AccountTransaction
 	if err := validateBody(c, &txn); err != nil {
-		return err
+		return nil
 	}
 	txn.CreatedBy = middleware.GetUserID(c)
 	txn.UpdatedBy = middleware.GetUserID(c)

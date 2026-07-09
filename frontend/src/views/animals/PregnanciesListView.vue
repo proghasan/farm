@@ -13,6 +13,7 @@ import PageHeader from '../../components/PageHeader.vue'
 import DateDisplay from '../../components/DateDisplay.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
+import { getErrorMessage } from "../../utils/error";
 
 const headerStore = useHeaderStore()
 const { success, error: showError } = useToast()
@@ -143,7 +144,7 @@ async function handleSave() {
     showModal.value = false
     await load()
   } catch (e: any) {
-    showError('Failed', e?.response?.data?.message || 'An error occurred')
+    showError('Failed', getErrorMessage(e))
   } finally {
     saving.value = false
   }
@@ -156,7 +157,7 @@ async function handleDelete(id: number) {
     success('Deleted', 'Pregnancy record has been deleted')
     await load()
   } catch (e: any) {
-    showError('Failed', e?.response?.data?.message || 'An error occurred')
+    showError('Failed', getErrorMessage(e))
   }
 }
 

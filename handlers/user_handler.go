@@ -46,7 +46,7 @@ func GetUser(c fiber.Ctx, db *gorm.DB) error {
 func CreateUser(c fiber.Ctx, db *gorm.DB) error {
 	var req CreateUserRequest
 	if err := validateBody(c, &req); err != nil {
-		return err
+		return nil
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)

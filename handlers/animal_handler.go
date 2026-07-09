@@ -40,7 +40,7 @@ func GetAnimal(c fiber.Ctx, db *gorm.DB) error {
 func CreateAnimal(c fiber.Ctx, db *gorm.DB) error {
 	var animal models.Animal
 	if err := validateBody(c, &animal); err != nil {
-		return err
+		return nil
 	}
 	animal.CreatedBy = middleware.GetUserID(c)
 	animal.UpdatedBy = middleware.GetUserID(c)

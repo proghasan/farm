@@ -34,7 +34,7 @@ func GetPregnancy(c fiber.Ctx, db *gorm.DB) error {
 func CreatePregnancy(c fiber.Ctx, db *gorm.DB) error {
 	var item models.AnimalPregnancy
 	if err := validateBody(c, &item); err != nil {
-		return err
+		return nil
 	}
 	item.CreatedBy = middleware.GetUserID(c)
 	item.UpdatedBy = middleware.GetUserID(c)

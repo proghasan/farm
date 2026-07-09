@@ -13,6 +13,7 @@ import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
+import { getErrorMessage } from "../../utils/error";
 
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
@@ -74,7 +75,7 @@ async function handleSave() {
     showModal.value = false
     await load()
   } catch (e: any) {
-    showError('Failed', e?.response?.data?.message || 'An error occurred')
+    showError('Failed', getErrorMessage(e))
   } finally {
     saving.value = false
   }
@@ -87,7 +88,7 @@ async function handleDelete(id: number) {
     success('Deleted', 'Category has been deleted')
     await load()
   } catch (e: any) {
-    showError('Failed', e?.response?.data?.message || 'An error occurred')
+    showError('Failed', getErrorMessage(e))
   }
 }
 

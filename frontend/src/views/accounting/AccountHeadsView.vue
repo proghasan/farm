@@ -14,6 +14,7 @@ import {
 import type { AccountHead } from '../../api'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
+import { getErrorMessage } from "../../utils/error";
 
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
@@ -87,7 +88,7 @@ async function handleSave() {
     showModal.value = false
     await fetchItems()
   } catch (e: any) {
-    showError('Failed', e?.response?.data?.message || 'An error occurred')
+    showError('Failed', getErrorMessage(e))
   }
 }
 
@@ -98,7 +99,7 @@ async function handleDelete(id: number) {
     success('Deleted', 'Account head has been deleted')
     await fetchItems()
   } catch (e: any) {
-    showError('Failed', e?.response?.data?.message || 'An error occurred')
+    showError('Failed', getErrorMessage(e))
   }
 }
 

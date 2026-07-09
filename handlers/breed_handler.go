@@ -29,7 +29,7 @@ func GetBreed(c fiber.Ctx, db *gorm.DB) error {
 func CreateBreed(c fiber.Ctx, db *gorm.DB) error {
 	var breed models.Breed
 	if err := validateBody(c, &breed); err != nil {
-		return err
+		return nil
 	}
 	breed.CreatedBy = middleware.GetUserID(c)
 	breed.UpdatedBy = middleware.GetUserID(c)

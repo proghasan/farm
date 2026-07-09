@@ -32,7 +32,7 @@ func GetInventoryTransaction(c fiber.Ctx, db *gorm.DB) error {
 func CreateInventoryTransaction(c fiber.Ctx, db *gorm.DB) error {
 	var txn models.InventoryTransaction
 	if err := validateBody(c, &txn); err != nil {
-		return err
+		return nil
 	}
 	txn.CreatedBy = middleware.GetUserID(c)
 	txn.UpdatedBy = middleware.GetUserID(c)

@@ -26,7 +26,7 @@ func GetInventoryCategory(c fiber.Ctx, db *gorm.DB) error {
 func CreateInventoryCategory(c fiber.Ctx, db *gorm.DB) error {
 	var cat models.InventoryCategory
 	if err := validateBody(c, &cat); err != nil {
-		return err
+		return nil
 	}
 	cat.CreatedBy = middleware.GetUserID(c)
 	cat.UpdatedBy = middleware.GetUserID(c)

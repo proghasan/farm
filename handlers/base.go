@@ -98,7 +98,8 @@ func handleError(c fiber.Ctx, err error) error {
 
 func validateBody(c fiber.Ctx, out interface{}) error {
 	if err := c.Bind().Body(out); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		return err
 	}
 	if err := validate.Struct(out); err != nil {
 		errs := err.(validator.ValidationErrors)
@@ -106,7 +107,8 @@ func validateBody(c fiber.Ctx, out interface{}) error {
 		for _, e := range errs {
 			msgs = append(msgs, e.Field()+" is "+e.Tag())
 		}
-		return c.Status(422).JSON(fiber.Map{"errors": msgs})
+		c.Status(422).JSON(fiber.Map{"errors": msgs})
+		return err
 	}
 	return nil
 }

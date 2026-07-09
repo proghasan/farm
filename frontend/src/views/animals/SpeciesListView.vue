@@ -11,11 +11,12 @@ import type { Species } from "../../api";
 import type { Column } from "../../components/DataTable/types";
 import { DataTable } from "../../components/DataTable";
 import RowActions from "../../components/RowActions.vue";
-import Modal from "../../components/Modal.vue";
+import Drawer from "../../components/Drawer.vue";
 import PageHeader from "../../components/PageHeader.vue";
 import DateDisplay from "../../components/DateDisplay.vue";
 import { useToast } from "../../composables/useToast";
 import { useHeaderStore } from "../../stores/header";
+import { getErrorMessage } from "../../utils/error";
 
 const { success, error: showError } = useToast();
 const headerStore = useHeaderStore();
@@ -68,6 +69,7 @@ function openEdit(id: number) {
 }
 
 async function save() {
+  console.log("run");
   saving.value = true;
   try {
     if (editingId.value) {
@@ -80,7 +82,7 @@ async function save() {
     showModal.value = false;
     await fetchData();
   } catch (e: any) {
-    showError("Failed", e?.response?.data?.message || "An error occurred");
+    showError("Failed", getErrorMessage(e));
   } finally {
     saving.value = false;
   }
@@ -93,7 +95,7 @@ async function handleDelete(id: number) {
     success("Deleted", "Species has been deleted");
     await fetchData();
   } catch (e: any) {
-    showError("Failed", e?.response?.data?.message || "An error occurred");
+    showError("Failed", getErrorMessage(e));
   }
 }
 
@@ -161,11 +163,10 @@ onUnmounted(() => headerStore.clear());
       </template>
     </DataTable>
 
-    <Modal
+    <Drawer
       :show="showModal"
       :title="editingId ? 'Edit Species' : 'Add Species'"
       @close="showModal = false"
-      size="sm"
     >
       <form @submit.prevent="save">
         <div>
@@ -188,13 +189,13 @@ onUnmounted(() => headerStore.clear());
           Cancel
         </button>
         <button
-          type="submit"
+          @click="save"
           :disabled="saving"
           class="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-xl hover:bg-brand-700 disabled:opacity-50"
         >
           {{ saving ? "Saving..." : "Save" }}
         </button>
       </template>
-    </Modal>
+    </Drawer>
   </div>
 </template>

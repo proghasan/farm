@@ -29,7 +29,7 @@ func GetVaccine(c fiber.Ctx, db *gorm.DB) error {
 func CreateVaccine(c fiber.Ctx, db *gorm.DB) error {
 	var vaccine models.Vaccine
 	if err := validateBody(c, &vaccine); err != nil {
-		return err
+		return nil
 	}
 	vaccine.CreatedBy = middleware.GetUserID(c)
 	vaccine.UpdatedBy = middleware.GetUserID(c)

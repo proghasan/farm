@@ -29,7 +29,7 @@ func GetWeightHistory(c fiber.Ctx, db *gorm.DB) error {
 func CreateWeightHistory(c fiber.Ctx, db *gorm.DB) error {
 	var w models.AnimalWeightHistory
 	if err := validateBody(c, &w); err != nil {
-		return err
+		return nil
 	}
 	w.CreatedBy = middleware.GetUserID(c)
 	w.UpdatedBy = middleware.GetUserID(c)
