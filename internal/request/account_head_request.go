@@ -7,7 +7,7 @@ type CreateAccountHeadRequest struct {
 }
 
 type UpdateAccountHeadRequest struct {
-	Type        *string `json:"type"`
-	Name        *string `json:"name"`
+	Type        *string `json:"type" validate:"omitempty,oneof=Income Expense"`
+	Name        *string `json:"name" validate:"omitempty,min=1,max=150"`
 	Description *string `json:"description"`
 }

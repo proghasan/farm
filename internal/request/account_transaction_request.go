@@ -12,7 +12,7 @@ type CreateAccountTransactionRequest struct {
 type UpdateAccountTransactionRequest struct {
 	TransactionDate *string  `json:"transaction_date"`
 	Amount          *float64 `json:"amount"`
-	PaymentMethod   *string  `json:"payment_method"`
+	PaymentMethod   *string  `json:"payment_method" validate:"omitempty,oneof=Cash Bank 'Mobile Banking' Other"`
 	ReferenceNo     *string  `json:"reference_no"`
 	Description     *string  `json:"description"`
 }

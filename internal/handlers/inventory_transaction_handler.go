@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -46,9 +47,17 @@ func (h *InventoryTransactionHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *InventoryTransactionHandler) Create(c fiber.Ctx) error {
-	var txn models.InventoryTransaction
-	if err := validator.Body(c, &txn); err != nil {
+	var req request.CreateInventoryTransactionRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	txn := models.InventoryTransaction{
+		InventoryItemID: req.InventoryItemID,
+		TransactionType: req.TransactionType,
+		Quantity:        req.Quantity,
+		TransactionDate: req.TransactionDate,
+		Remarks:         req.Remarks,
 	}
 	txn.CreatedBy = middleware.GetUserID(c)
 	txn.UpdatedBy = middleware.GetUserID(c)
@@ -65,18 +74,27 @@ func (h *InventoryTransactionHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Transaction not found"})
 	}
-	var input models.InventoryTransaction
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateInventoryTransactionRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(txn, map[string]interface{}{
-		"inventory_item_id": input.InventoryItemID,
-		"transaction_type":  input.TransactionType,
-		"quantity":          input.Quantity,
-		"transaction_date":  input.TransactionDate,
-		"remarks":           input.Remarks,
-		"updated_by":        middleware.GetUserID(c),
-	}); err != nil {
+	updates := map[string]interface{}{
+		"updated_by": middleware.GetUserID(c),
+	}
+	if req.TransactionType != nil {
+		updates["transaction_type"] = *req.TransactionType
+	}
+	if req.Quantity != nil {
+		updates["quantity"] = *req.Quantity
+	}
+	if req.TransactionDate != nil {
+		updates["transaction_date"] = *req.TransactionDate
+	}
+	if req.Remarks != nil {
+		updates["remarks"] = *req.Remarks
+	}
+	if err := h.repo.Update(txn, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	h.repo.Preload(txn)

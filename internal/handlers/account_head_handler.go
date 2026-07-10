@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -45,9 +46,15 @@ func (h *AccountHeadHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *AccountHeadHandler) Create(c fiber.Ctx) error {
-	var head models.AccountHead
-	if err := validator.Body(c, &head); err != nil {
+	var req request.CreateAccountHeadRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	head := models.AccountHead{
+		Type:        req.Type,
+		Name:        req.Name,
+		Description: req.Description,
 	}
 	head.CreatedBy = middleware.GetUserID(c)
 	head.UpdatedBy = middleware.GetUserID(c)
@@ -63,16 +70,24 @@ func (h *AccountHeadHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Account head not found"})
 	}
-	var input models.AccountHead
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateAccountHeadRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(head, map[string]interface{}{
-		"type":        input.Type,
-		"name":        input.Name,
-		"description": input.Description,
-		"updated_by":  middleware.GetUserID(c),
-	}); err != nil {
+	updates := map[string]interface{}{
+		"updated_by": middleware.GetUserID(c),
+	}
+	if req.Type != nil {
+		updates["type"] = *req.Type
+	}
+	if req.Name != nil {
+		updates["name"] = *req.Name
+	}
+	if req.Description != nil {
+		updates["description"] = *req.Description
+	}
+	if err := h.repo.Update(head, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	return c.JSON(head)

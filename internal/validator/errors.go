@@ -1,12 +1,22 @@
 package validator
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
+
+func HandleBindError(c fiber.Ctx, err error) {
+	var vErr validator.ValidationErrors
+	if errors.As(err, &vErr) {
+		WriteErrors(c, vErr)
+		return
+	}
+	c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+}
 
 func WriteErrors(c fiber.Ctx, err error) {
 	if errs, ok := err.(validator.ValidationErrors); ok {

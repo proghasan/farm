@@ -9,7 +9,7 @@ type CreateInventoryTransactionRequest struct {
 }
 
 type UpdateInventoryTransactionRequest struct {
-	TransactionType *string  `json:"transaction_type"`
+	TransactionType *string  `json:"transaction_type" validate:"omitempty,oneof=Purchase Sale Consumption Adjustment Return Damage"`
 	Quantity        *float64 `json:"quantity"`
 	TransactionDate *string  `json:"transaction_date"`
 	Remarks         *string  `json:"remarks"`

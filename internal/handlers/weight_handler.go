@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -51,9 +52,16 @@ func (h *WeightHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *WeightHandler) Create(c fiber.Ctx) error {
-	var w models.AnimalWeightHistory
-	if err := validator.Body(c, &w); err != nil {
+	var req request.CreateWeightRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	w := models.AnimalWeightHistory{
+		AnimalID:   req.AnimalID,
+		Weight:     req.Weight,
+		RecordDate: req.RecordDate,
+		Remarks:    req.Remarks,
 	}
 	w.CreatedBy = middleware.GetUserID(c)
 	w.UpdatedBy = middleware.GetUserID(c)
@@ -80,16 +88,24 @@ func (h *WeightHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Record not found"})
 	}
-	var input models.AnimalWeightHistory
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateWeightRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(w, map[string]interface{}{
-		"weight":      input.Weight,
-		"record_date": input.RecordDate,
-		"remarks":     input.Remarks,
-		"updated_by":  middleware.GetUserID(c),
-	}); err != nil {
+	updates := map[string]interface{}{
+		"updated_by": middleware.GetUserID(c),
+	}
+	if req.Weight != nil {
+		updates["weight"] = *req.Weight
+	}
+	if req.RecordDate != nil {
+		updates["record_date"] = *req.RecordDate
+	}
+	if req.Remarks != nil {
+		updates["remarks"] = *req.Remarks
+	}
+	if err := h.repo.Update(w, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	return c.JSON(w)

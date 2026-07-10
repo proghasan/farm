@@ -7,5 +7,5 @@ type CreateBreedRequest struct {
 
 type UpdateBreedRequest struct {
 	SpeciesID *uint   `json:"species_id"`
-	Name      *string `json:"name"`
+	Name      *string `json:"name" validate:"omitempty,min=1,max=150"`
 }

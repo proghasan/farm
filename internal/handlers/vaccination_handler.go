@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -45,9 +46,18 @@ func (h *VaccinationHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *VaccinationHandler) Create(c fiber.Ctx) error {
-	var v models.AnimalVaccination
-	if err := validator.Body(c, &v); err != nil {
+	var req request.CreateVaccinationRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	v := models.AnimalVaccination{
+		AnimalID:       req.AnimalID,
+		VaccineID:      req.VaccineID,
+		VaccinationDate: req.VaccinationDate,
+		NextDueDate:    req.NextDueDate,
+		DoctorName:     req.DoctorName,
+		Remarks:        req.Remarks,
 	}
 	v.CreatedBy = middleware.GetUserID(c)
 	v.UpdatedBy = middleware.GetUserID(c)
@@ -64,19 +74,27 @@ func (h *VaccinationHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Vaccination not found"})
 	}
-	var input models.AnimalVaccination
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateVaccinationRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(v, map[string]interface{}{
-		"animal_id":       input.AnimalID,
-		"vaccine_id":      input.VaccineID,
-		"vaccination_date": input.VaccinationDate,
-		"next_due_date":   input.NextDueDate,
-		"doctor_name":     input.DoctorName,
-		"remarks":         input.Remarks,
-		"updated_by":      middleware.GetUserID(c),
-	}); err != nil {
+	updates := map[string]interface{}{
+		"updated_by": middleware.GetUserID(c),
+	}
+	if req.VaccinationDate != nil {
+		updates["vaccination_date"] = *req.VaccinationDate
+	}
+	if req.NextDueDate != nil {
+		updates["next_due_date"] = *req.NextDueDate
+	}
+	if req.DoctorName != nil {
+		updates["doctor_name"] = *req.DoctorName
+	}
+	if req.Remarks != nil {
+		updates["remarks"] = *req.Remarks
+	}
+	if err := h.repo.Update(v, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	h.repo.Preload(v)

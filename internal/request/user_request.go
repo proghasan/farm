@@ -10,13 +10,13 @@ type CreateUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Name     *string `json:"name"`
-	Email    *string `json:"email"`
+	Name     *string `json:"name" validate:"omitempty,min=1,max=150"`
+	Email    *string `json:"email" validate:"omitempty,email"`
 	Phone    *string `json:"phone"`
 	Username *string `json:"username"`
 	Password *string `json:"password"`
-	Role     *string `json:"role"`
-	Status   *string `json:"status"`
+	Role     *string `json:"role" validate:"omitempty,oneof=Owner Manager Veterinarian Worker Accountant"`
+	Status   *string `json:"status" validate:"omitempty,oneof=Active Inactive Suspended"`
 }
 
 

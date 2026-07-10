@@ -56,7 +56,8 @@ func (h *UserHandler) Profile(c fiber.Ctx) error {
 
 func (h *UserHandler) Create(c fiber.Ctx) error {
 	var req request.CreateUserRequest
-	if err := validator.Body(c, &req); err != nil {
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -103,7 +104,8 @@ func (h *UserHandler) Update(c fiber.Ctx) error {
 
 	var req request.UpdateUserRequest
 	if err := c.Bind().Body(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+		validator.HandleBindError(c, err)
+		return nil
 	}
 
 	updates := map[string]interface{}{}

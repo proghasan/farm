@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -46,9 +47,18 @@ func (h *AccountTransactionHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *AccountTransactionHandler) Create(c fiber.Ctx) error {
-	var txn models.AccountTransaction
-	if err := validator.Body(c, &txn); err != nil {
+	var req request.CreateAccountTransactionRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	txn := models.AccountTransaction{
+		AccountHeadID:   req.AccountHeadID,
+		TransactionDate: req.TransactionDate,
+		Amount:          req.Amount,
+		PaymentMethod:   req.PaymentMethod,
+		ReferenceNo:     req.ReferenceNo,
+		Description:     req.Description,
 	}
 	txn.CreatedBy = middleware.GetUserID(c)
 	txn.UpdatedBy = middleware.GetUserID(c)
@@ -65,19 +75,30 @@ func (h *AccountTransactionHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Transaction not found"})
 	}
-	var input models.AccountTransaction
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateAccountTransactionRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(txn, map[string]interface{}{
-		"account_head_id":  input.AccountHeadID,
-		"transaction_date": input.TransactionDate,
-		"amount":           input.Amount,
-		"payment_method":   input.PaymentMethod,
-		"reference_no":     input.ReferenceNo,
-		"description":      input.Description,
-		"updated_by":       middleware.GetUserID(c),
-	}); err != nil {
+	updates := map[string]interface{}{
+		"updated_by": middleware.GetUserID(c),
+	}
+	if req.TransactionDate != nil {
+		updates["transaction_date"] = *req.TransactionDate
+	}
+	if req.Amount != nil {
+		updates["amount"] = *req.Amount
+	}
+	if req.PaymentMethod != nil {
+		updates["payment_method"] = *req.PaymentMethod
+	}
+	if req.ReferenceNo != nil {
+		updates["reference_no"] = *req.ReferenceNo
+	}
+	if req.Description != nil {
+		updates["description"] = *req.Description
+	}
+	if err := h.repo.Update(txn, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	h.repo.Preload(txn)

@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -44,9 +45,13 @@ func (h *CategoryHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *CategoryHandler) Create(c fiber.Ctx) error {
-	var cat models.InventoryCategory
-	if err := validator.Body(c, &cat); err != nil {
+	var req request.CreateCategoryRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	cat := models.InventoryCategory{
+		Name: req.Name,
 	}
 	cat.CreatedBy = middleware.GetUserID(c)
 	cat.UpdatedBy = middleware.GetUserID(c)
@@ -62,14 +67,18 @@ func (h *CategoryHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Category not found"})
 	}
-	var input models.InventoryCategory
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateCategoryRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(cat, map[string]interface{}{
-		"name":       input.Name,
+	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
-	}); err != nil {
+	}
+	if req.Name != nil {
+		updates["name"] = *req.Name
+	}
+	if err := h.repo.Update(cat, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	return c.JSON(cat)

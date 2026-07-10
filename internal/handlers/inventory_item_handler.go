@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -45,9 +46,18 @@ func (h *InventoryItemHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *InventoryItemHandler) Create(c fiber.Ctx) error {
-	var item models.InventoryItem
-	if err := validator.Body(c, &item); err != nil {
+	var req request.CreateInventoryItemRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	item := models.InventoryItem{
+		CategoryID:    req.CategoryID,
+		Name:          req.Name,
+		SKU:           req.SKU,
+		Unit:          req.Unit,
+		PurchasePrice: req.PurchasePrice,
+		SellingPrice:  req.SellingPrice,
 	}
 	item.CreatedBy = middleware.GetUserID(c)
 	item.UpdatedBy = middleware.GetUserID(c)
@@ -64,19 +74,30 @@ func (h *InventoryItemHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Item not found"})
 	}
-	var input models.InventoryItem
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateInventoryItemRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(item, map[string]interface{}{
-		"category_id":    input.CategoryID,
-		"name":           input.Name,
-		"sku":            input.SKU,
-		"unit":           input.Unit,
-		"purchase_price": input.PurchasePrice,
-		"selling_price":  input.SellingPrice,
-		"updated_by":     middleware.GetUserID(c),
-	}); err != nil {
+	updates := map[string]interface{}{
+		"updated_by": middleware.GetUserID(c),
+	}
+	if req.Name != nil {
+		updates["name"] = *req.Name
+	}
+	if req.SKU != nil {
+		updates["sku"] = *req.SKU
+	}
+	if req.Unit != nil {
+		updates["unit"] = *req.Unit
+	}
+	if req.PurchasePrice != nil {
+		updates["purchase_price"] = *req.PurchasePrice
+	}
+	if req.SellingPrice != nil {
+		updates["selling_price"] = *req.SellingPrice
+	}
+	if err := h.repo.Update(item, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	h.repo.Preload(item)

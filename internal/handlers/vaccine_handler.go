@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -45,9 +46,21 @@ func (h *VaccineHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *VaccineHandler) Create(c fiber.Ctx) error {
-	var vaccine models.Vaccine
-	if err := validator.Body(c, &vaccine); err != nil {
+	var req request.CreateVaccineRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	vaccine := models.Vaccine{
+		SpeciesID:       req.SpeciesID,
+		Name:            req.Name,
+		Description:     req.Description,
+		Dose:            req.Dose,
+		MinimumAgeValue: req.MinimumAgeValue,
+		MinimumAgeUnit:  req.MinimumAgeUnit,
+		IntervalValue:   req.IntervalValue,
+		IntervalUnit:    req.IntervalUnit,
+		IsRepeatable:    req.IsRepeatable,
 	}
 	vaccine.CreatedBy = middleware.GetUserID(c)
 	vaccine.UpdatedBy = middleware.GetUserID(c)
@@ -64,22 +77,39 @@ func (h *VaccineHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Vaccine not found"})
 	}
-	var input models.Vaccine
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateVaccineRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(vaccine, map[string]interface{}{
-		"species_id":       input.SpeciesID,
-		"name":             input.Name,
-		"description":      input.Description,
-		"dose":             input.Dose,
-		"minimum_age_value": input.MinimumAgeValue,
-		"minimum_age_unit": input.MinimumAgeUnit,
-		"interval_value":   input.IntervalValue,
-		"interval_unit":    input.IntervalUnit,
-		"is_repeatable":    input.IsRepeatable,
-		"updated_by":       middleware.GetUserID(c),
-	}); err != nil {
+	updates := map[string]interface{}{
+		"updated_by": middleware.GetUserID(c),
+	}
+	if req.Name != nil {
+		updates["name"] = *req.Name
+	}
+	if req.Description != nil {
+		updates["description"] = *req.Description
+	}
+	if req.Dose != nil {
+		updates["dose"] = *req.Dose
+	}
+	if req.MinimumAgeValue != nil {
+		updates["minimum_age_value"] = *req.MinimumAgeValue
+	}
+	if req.MinimumAgeUnit != nil {
+		updates["minimum_age_unit"] = *req.MinimumAgeUnit
+	}
+	if req.IntervalValue != nil {
+		updates["interval_value"] = *req.IntervalValue
+	}
+	if req.IntervalUnit != nil {
+		updates["interval_unit"] = *req.IntervalUnit
+	}
+	if req.IsRepeatable != nil {
+		updates["is_repeatable"] = *req.IsRepeatable
+	}
+	if err := h.repo.Update(vaccine, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	h.repo.Preload(vaccine)

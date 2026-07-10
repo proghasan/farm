@@ -47,10 +47,12 @@ func (h *SpeciesHandler) Get(c fiber.Ctx) error {
 
 func (h *SpeciesHandler) Create(c fiber.Ctx) error {
 	var req request.CreateSpeciesRequest
-	if err := validator.Body(c, &req); err != nil {
+
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
 	}
-	req.Trim()
+
 	species := models.Species{
 		Name: req.Name,
 	}
@@ -68,11 +70,13 @@ func (h *SpeciesHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Species not found"})
 	}
+	
 	var req request.UpdateSpeciesRequest
-	if err := validator.Body(c, &req); err != nil {
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
 	}
-	req.Trim()
+
 	species.Name = req.Name
 	species.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Update(species); err != nil {

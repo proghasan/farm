@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -66,9 +67,25 @@ func (h *AnimalHandler) Profile(c fiber.Ctx) error {
 }
 
 func (h *AnimalHandler) Create(c fiber.Ctx) error {
-	var animal models.Animal
-	if err := validator.Body(c, &animal); err != nil {
+	var req request.CreateAnimalRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	animal := models.Animal{
+		TagNo:         req.TagNo,
+		SpeciesID:     req.SpeciesID,
+		BreedID:       req.BreedID,
+		FatherID:      req.FatherID,
+		MotherID:      req.MotherID,
+		Gender:        req.Gender,
+		BirthDate:     req.BirthDate,
+		PurchaseDate:  req.PurchaseDate,
+		PurchasePrice: req.PurchasePrice,
+		CurrentWeight: req.CurrentWeight,
+		Color:         req.Color,
+		Status:        models.AnimalStatus(req.Status),
+		Remarks:       req.Remarks,
 	}
 	animal.CreatedBy = middleware.GetUserID(c)
 	animal.UpdatedBy = middleware.GetUserID(c)
@@ -85,26 +102,54 @@ func (h *AnimalHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Animal not found"})
 	}
-	var input models.Animal
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateAnimalRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(animal, map[string]interface{}{
-		"tag_no":         input.TagNo,
-		"species_id":     input.SpeciesID,
-		"breed_id":       input.BreedID,
-		"father_id":      input.FatherID,
-		"mother_id":      input.MotherID,
-		"gender":         input.Gender,
-		"birth_date":     input.BirthDate,
-		"purchase_date":  input.PurchaseDate,
-		"purchase_price": input.PurchasePrice,
-		"current_weight": input.CurrentWeight,
-		"color":          input.Color,
-		"status":         input.Status,
-		"remarks":        input.Remarks,
-		"updated_by":     middleware.GetUserID(c),
-	}); err != nil {
+	updates := map[string]interface{}{
+		"updated_by": middleware.GetUserID(c),
+	}
+	if req.TagNo != nil {
+		updates["tag_no"] = *req.TagNo
+	}
+	if req.SpeciesID != nil {
+		updates["species_id"] = *req.SpeciesID
+	}
+	if req.BreedID != nil {
+		updates["breed_id"] = *req.BreedID
+	}
+	if req.FatherID != nil {
+		updates["father_id"] = *req.FatherID
+	}
+	if req.MotherID != nil {
+		updates["mother_id"] = *req.MotherID
+	}
+	if req.Gender != nil {
+		updates["gender"] = *req.Gender
+	}
+	if req.BirthDate != nil {
+		updates["birth_date"] = *req.BirthDate
+	}
+	if req.PurchaseDate != nil {
+		updates["purchase_date"] = *req.PurchaseDate
+	}
+	if req.PurchasePrice != nil {
+		updates["purchase_price"] = *req.PurchasePrice
+	}
+	if req.CurrentWeight != nil {
+		updates["current_weight"] = *req.CurrentWeight
+	}
+	if req.Color != nil {
+		updates["color"] = *req.Color
+	}
+	if req.Status != nil {
+		updates["status"] = *req.Status
+	}
+	if req.Remarks != nil {
+		updates["remarks"] = *req.Remarks
+	}
+	if err := h.repo.Update(animal, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	h.repo.Preload(animal)

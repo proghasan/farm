@@ -8,7 +8,7 @@ type CreateWeightRequest struct {
 }
 
 type UpdateWeightRequest struct {
-	Weight     *float64 `json:"weight"`
+	Weight     *float64 `json:"weight" validate:"omitempty,gt=0"`
 	RecordDate *string  `json:"record_date"`
 	Remarks    *string  `json:"remarks"`
 }

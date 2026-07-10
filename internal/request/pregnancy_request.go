@@ -15,7 +15,7 @@ type UpdatePregnancyRequest struct {
 	MatingDate            *string `json:"mating_date"`
 	ExpectedDueDate       *string `json:"expected_due_date"`
 	ActualBirthDate       *string `json:"actual_birth_date"`
-	Status                *string `json:"status"`
+	Status                *string `json:"status" validate:"omitempty,oneof=Mated Pregnant Delivered Aborted Miscarriage Failed"`
 	Note                  *string `json:"note"`
 	NumberOfChildren      *int    `json:"number_of_children"`
 	NumberOfMaleChildren  *int    `json:"number_of_male_children"`

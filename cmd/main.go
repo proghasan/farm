@@ -7,6 +7,7 @@ import (
 	"farm/internal/database"
 	"farm/internal/models"
 	"farm/internal/routes"
+	"farm/internal/validator"
 
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/crypto/bcrypt"
@@ -19,7 +20,8 @@ func main() {
 	database.Migrate()
 
 	app := fiber.New(fiber.Config{
-		AppName: "Farm API",
+		AppName:         "Farm API",
+		StructValidator: validator.NewFiberValidator(),
 	})
 
 	routes.Setup(app, cfg)

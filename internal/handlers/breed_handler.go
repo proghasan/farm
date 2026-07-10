@@ -4,6 +4,7 @@ import (
 	"farm/internal/middleware"
 	"farm/internal/models"
 	"farm/internal/repositories"
+	"farm/internal/request"
 	"farm/internal/response"
 	"farm/internal/validator"
 
@@ -45,9 +46,14 @@ func (h *BreedHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *BreedHandler) Create(c fiber.Ctx) error {
-	var breed models.Breed
-	if err := validator.Body(c, &breed); err != nil {
+	var req request.CreateBreedRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
 		return nil
+	}
+	breed := models.Breed{
+		SpeciesID: req.SpeciesID,
+		Name:      req.Name,
 	}
 	breed.CreatedBy = middleware.GetUserID(c)
 	breed.UpdatedBy = middleware.GetUserID(c)
@@ -64,15 +70,21 @@ func (h *BreedHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Breed not found"})
 	}
-	var input models.Breed
-	if err := c.Bind().Body(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	var req request.UpdateBreedRequest
+	if err := c.Bind().Body(&req); err != nil {
+		validator.HandleBindError(c, err)
+		return nil
 	}
-	if err := h.repo.Update(breed, map[string]interface{}{
-		"species_id": input.SpeciesID,
-		"name":       input.Name,
+	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
-	}); err != nil {
+	}
+	if req.SpeciesID != nil {
+		updates["species_id"] = *req.SpeciesID
+	}
+	if req.Name != nil {
+		updates["name"] = *req.Name
+	}
+	if err := h.repo.Update(breed, updates); err != nil {
 		return validator.HandleDBError(c, err)
 	}
 	h.repo.Preload(breed)

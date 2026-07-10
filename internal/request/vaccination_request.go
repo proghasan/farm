@@ -12,6 +12,6 @@ type CreateVaccinationRequest struct {
 type UpdateVaccinationRequest struct {
 	VaccinationDate *string `json:"vaccination_date"`
 	NextDueDate     *string `json:"next_due_date"`
-	DoctorName      *string `json:"doctor_name"`
+	DoctorName      *string `json:"doctor_name" validate:"omitempty,max=150"`
 	Remarks         *string `json:"remarks"`
 }
