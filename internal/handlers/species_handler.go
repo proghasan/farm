@@ -47,11 +47,9 @@ func (h *SpeciesHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *SpeciesHandler) Create(c fiber.Ctx) error {
-	form := validator.New(c).Rules(request.SpeciesCreateRules())
-
 	var req request.SpeciesRequest
 
-	if err := form.Validate(&req); err != nil {
+	if err := validator.New(c, h.repo.DB).Rules(request.SpeciesCreateRules()).Validate(&req); err != nil {
 		return err
 	}
 
@@ -75,13 +73,11 @@ func (h *SpeciesHandler) Update(c fiber.Ctx) error {
 		return err
 	}
 
-	form := validator.New(c).Rules(request.SpeciesUpdateRules())
-	
 	var req request.SpeciesRequest
 
-	if err := form.Validate(&req); err != nil {
+	if err := validator.New(c, h.repo.DB).Rules(request.SpeciesUpdateRules(id)).Validate(&req); err != nil {
 		return err
-	}	
+	}
 
 	species.Name = req.Name
 	species.UpdatedBy = middleware.GetUserID(c)

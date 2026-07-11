@@ -4,24 +4,28 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 var rules = map[string]func(*Form, string, ...string) *Form{
 	"required": (*Form).Required,
 	"min":      (*Form).Min,
 	"max":      (*Form).Max,
+	"unique":   (*Form).Unique,
 }
 
 type Form struct {
 	ctx    fiber.Ctx
+	db     *gorm.DB
 	rules  map[string]string
 	data   map[string]any
 	errors map[string][]string
 }
 
-func New(c fiber.Ctx) *Form {
+func New(c fiber.Ctx, db *gorm.DB) *Form {
 	return &Form{
 		ctx:   c,
+		db:    db,
 		rules: make(map[string]string),
 	}
 }
