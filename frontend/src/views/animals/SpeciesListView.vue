@@ -14,6 +14,7 @@ import RowActions from "../../components/RowActions.vue";
 import Drawer from "../../components/Drawer.vue";
 import PageHeader from "../../components/PageHeader.vue";
 import DateDisplay from "../../components/DateDisplay.vue";
+import Avatar from "../../components/Avatar.vue";
 import { useToast } from "../../composables/useToast";
 import { useHeaderStore } from "../../stores/header";
 import { getFirstErrorMessage } from "../../utils/error";
@@ -101,6 +102,7 @@ async function handleDelete(id: number) {
 
 const columns: Column[] = [
   { key: "name", label: "Name", sortable: true },
+  { key: "user", label: "Created By" },
   { key: "created_at", label: "Created At" },
   {
     key: "actions",
@@ -158,6 +160,12 @@ onUnmounted(() => headerStore.clear());
         fetchData();
       "
     >
+      <template #cell-user="{ item }">
+        <div class="flex items-center gap-2">
+          <Avatar :name="item.user?.name" size="sm" />
+          <span class="text-sm text-gray-700">{{ item.user?.name || '—' }}</span>
+        </div>
+      </template>
       <template #cell-created_at="{ item }">
         <DateDisplay :value="item.created_at" />
       </template>

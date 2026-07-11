@@ -34,6 +34,7 @@ export interface Species {
   id: number
   name: string
   breeds?: Breed[]
+  user?: User
 }
 
 export interface Breed {
