@@ -6,6 +6,7 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
+	"farm/pkg/validator"
 
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
@@ -46,9 +47,11 @@ func (h *SpeciesHandler) Get(c fiber.Ctx) error {
 }
 
 func (h *SpeciesHandler) Create(c fiber.Ctx) error {
-	var req request.CreateSpeciesRequest
+	form := validator.New(c).Rules(request.SpeciesCreateRules())
 
-	if err := c.Bind().Body(&req); err != nil {
+	var req request.SpeciesRequest
+
+	if err := form.Validate(&req); err != nil {
 		return err
 	}
 
@@ -72,11 +75,13 @@ func (h *SpeciesHandler) Update(c fiber.Ctx) error {
 		return err
 	}
 
-	var req request.UpdateSpeciesRequest
+	form := validator.New(c).Rules(request.SpeciesUpdateRules())
+	
+	var req request.SpeciesRequest
 
-	if err := c.Bind().Body(&req); err != nil {
+	if err := form.Validate(&req); err != nil {
 		return err
-	}
+	}	
 
 	species.Name = req.Name
 	species.UpdatedBy = middleware.GetUserID(c)

@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -39,7 +37,7 @@ func (h *CategoryHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	cat, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Category not found"})
+		return err
 	}
 	return c.JSON(cat)
 }
@@ -47,8 +45,7 @@ func (h *CategoryHandler) Get(c fiber.Ctx) error {
 func (h *CategoryHandler) Create(c fiber.Ctx) error {
 	var req request.CreateCategoryRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	cat := models.InventoryCategory{
 		Name: req.Name,
@@ -56,7 +53,7 @@ func (h *CategoryHandler) Create(c fiber.Ctx) error {
 	cat.CreatedBy = middleware.GetUserID(c)
 	cat.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Create(&cat); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.Status(201).JSON(cat)
 }
@@ -65,12 +62,11 @@ func (h *CategoryHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	cat, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Category not found"})
+		return err
 	}
 	var req request.UpdateCategoryRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -79,7 +75,7 @@ func (h *CategoryHandler) Update(c fiber.Ctx) error {
 		updates["name"] = *req.Name
 	}
 	if err := h.repo.Update(cat, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.JSON(cat)
 }
@@ -87,7 +83,7 @@ func (h *CategoryHandler) Update(c fiber.Ctx) error {
 func (h *CategoryHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

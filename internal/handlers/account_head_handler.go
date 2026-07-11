@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -40,7 +38,7 @@ func (h *AccountHeadHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	head, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Account head not found"})
+		return err
 	}
 	return c.JSON(head)
 }
@@ -48,8 +46,7 @@ func (h *AccountHeadHandler) Get(c fiber.Ctx) error {
 func (h *AccountHeadHandler) Create(c fiber.Ctx) error {
 	var req request.CreateAccountHeadRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	head := models.AccountHead{
 		Type:        req.Type,
@@ -59,7 +56,7 @@ func (h *AccountHeadHandler) Create(c fiber.Ctx) error {
 	head.CreatedBy = middleware.GetUserID(c)
 	head.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Create(&head); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.Status(201).JSON(head)
 }
@@ -68,12 +65,11 @@ func (h *AccountHeadHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	head, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Account head not found"})
+		return err
 	}
 	var req request.UpdateAccountHeadRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -88,7 +84,7 @@ func (h *AccountHeadHandler) Update(c fiber.Ctx) error {
 		updates["description"] = *req.Description
 	}
 	if err := h.repo.Update(head, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.JSON(head)
 }
@@ -96,7 +92,7 @@ func (h *AccountHeadHandler) Update(c fiber.Ctx) error {
 func (h *AccountHeadHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -41,7 +39,7 @@ func (h *PregnancyHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	item, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Record not found"})
+		return err
 	}
 	return c.JSON(item)
 }
@@ -49,8 +47,7 @@ func (h *PregnancyHandler) Get(c fiber.Ctx) error {
 func (h *PregnancyHandler) Create(c fiber.Ctx) error {
 	var req request.CreatePregnancyRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	item := models.AnimalPregnancy{
 		AnimalID:        req.AnimalID,
@@ -64,7 +61,7 @@ func (h *PregnancyHandler) Create(c fiber.Ctx) error {
 	item.CreatedBy = middleware.GetUserID(c)
 	item.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Create(&item); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(&item)
 	return c.Status(201).JSON(item)
@@ -74,12 +71,11 @@ func (h *PregnancyHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	item, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Record not found"})
+		return err
 	}
 	var req request.UpdatePregnancyRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -115,7 +111,7 @@ func (h *PregnancyHandler) Update(c fiber.Ctx) error {
 		updates["number_of_dead_children"] = *req.NumberOfDeadChildren
 	}
 	if err := h.repo.Update(item, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(item)
 	return c.JSON(item)
@@ -124,7 +120,7 @@ func (h *PregnancyHandler) Update(c fiber.Ctx) error {
 func (h *PregnancyHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

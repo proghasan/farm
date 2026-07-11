@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -40,7 +38,7 @@ func (h *VaccinationHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	v, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Vaccination not found"})
+		return err
 	}
 	return c.JSON(v)
 }
@@ -48,8 +46,7 @@ func (h *VaccinationHandler) Get(c fiber.Ctx) error {
 func (h *VaccinationHandler) Create(c fiber.Ctx) error {
 	var req request.CreateVaccinationRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	v := models.AnimalVaccination{
 		AnimalID:       req.AnimalID,
@@ -62,7 +59,7 @@ func (h *VaccinationHandler) Create(c fiber.Ctx) error {
 	v.CreatedBy = middleware.GetUserID(c)
 	v.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Create(&v); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(&v)
 	return c.Status(201).JSON(v)
@@ -72,12 +69,11 @@ func (h *VaccinationHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	v, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Vaccination not found"})
+		return err
 	}
 	var req request.UpdateVaccinationRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -95,7 +91,7 @@ func (h *VaccinationHandler) Update(c fiber.Ctx) error {
 		updates["remarks"] = *req.Remarks
 	}
 	if err := h.repo.Update(v, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(v)
 	return c.JSON(v)
@@ -104,7 +100,7 @@ func (h *VaccinationHandler) Update(c fiber.Ctx) error {
 func (h *VaccinationHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -40,7 +38,7 @@ func (h *BreedHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	breed, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Breed not found"})
+		return err
 	}
 	return c.JSON(breed)
 }
@@ -48,8 +46,7 @@ func (h *BreedHandler) Get(c fiber.Ctx) error {
 func (h *BreedHandler) Create(c fiber.Ctx) error {
 	var req request.CreateBreedRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	breed := models.Breed{
 		SpeciesID: req.SpeciesID,
@@ -58,7 +55,7 @@ func (h *BreedHandler) Create(c fiber.Ctx) error {
 	breed.CreatedBy = middleware.GetUserID(c)
 	breed.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Create(&breed); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(&breed)
 	return c.Status(201).JSON(breed)
@@ -68,12 +65,11 @@ func (h *BreedHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	breed, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Breed not found"})
+		return err
 	}
 	var req request.UpdateBreedRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -85,7 +81,7 @@ func (h *BreedHandler) Update(c fiber.Ctx) error {
 		updates["name"] = *req.Name
 	}
 	if err := h.repo.Update(breed, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(breed)
 	return c.JSON(breed)
@@ -94,7 +90,7 @@ func (h *BreedHandler) Update(c fiber.Ctx) error {
 func (h *BreedHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

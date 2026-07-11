@@ -21,7 +21,6 @@ func main() {
 
 	app := fiber.New(fiber.Config{
 		AppName:         "Farm API",
-		StructValidator: config.NewValidator(),
 		ErrorHandler: response.ErrorHandler,
 	})
 

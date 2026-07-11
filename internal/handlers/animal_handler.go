@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -48,7 +46,7 @@ func (h *AnimalHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	animal, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Animal not found"})
+		return err
 	}
 	return c.JSON(animal)
 }
@@ -57,7 +55,7 @@ func (h *AnimalHandler) Profile(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	animal, err := h.repo.GetProfile(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Animal not found"})
+		return err
 	}
 	pregnancies, _ := h.pregRepo.ListByAnimalID(uint(id))
 	return c.JSON(fiber.Map{
@@ -69,8 +67,7 @@ func (h *AnimalHandler) Profile(c fiber.Ctx) error {
 func (h *AnimalHandler) Create(c fiber.Ctx) error {
 	var req request.CreateAnimalRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	animal := models.Animal{
 		TagNo:         req.TagNo,
@@ -90,7 +87,7 @@ func (h *AnimalHandler) Create(c fiber.Ctx) error {
 	animal.CreatedBy = middleware.GetUserID(c)
 	animal.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Create(&animal); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(&animal)
 	return c.Status(201).JSON(animal)
@@ -100,12 +97,11 @@ func (h *AnimalHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	animal, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Animal not found"})
+		return err
 	}
 	var req request.UpdateAnimalRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -150,7 +146,7 @@ func (h *AnimalHandler) Update(c fiber.Ctx) error {
 		updates["remarks"] = *req.Remarks
 	}
 	if err := h.repo.Update(animal, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(animal)
 	return c.JSON(animal)
@@ -159,7 +155,7 @@ func (h *AnimalHandler) Update(c fiber.Ctx) error {
 func (h *AnimalHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

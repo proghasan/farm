@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -46,7 +44,7 @@ func (h *WeightHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	w, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Record not found"})
+		return err
 	}
 	return c.JSON(w)
 }
@@ -54,8 +52,7 @@ func (h *WeightHandler) Get(c fiber.Ctx) error {
 func (h *WeightHandler) Create(c fiber.Ctx) error {
 	var req request.CreateWeightRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	w := models.AnimalWeightHistory{
 		AnimalID:   req.AnimalID,
@@ -76,7 +73,7 @@ func (h *WeightHandler) Create(c fiber.Ctx) error {
 		return nil
 	})
 	if err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(&w)
 	return c.Status(201).JSON(w)
@@ -86,12 +83,11 @@ func (h *WeightHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	w, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Record not found"})
+		return err
 	}
 	var req request.UpdateWeightRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -106,7 +102,7 @@ func (h *WeightHandler) Update(c fiber.Ctx) error {
 		updates["remarks"] = *req.Remarks
 	}
 	if err := h.repo.Update(w, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.JSON(w)
 }
@@ -114,7 +110,7 @@ func (h *WeightHandler) Update(c fiber.Ctx) error {
 func (h *WeightHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

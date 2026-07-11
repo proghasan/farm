@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -40,7 +38,7 @@ func (h *UserHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	user, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+		return err
 	}
 	return c.JSON(user)
 }
@@ -49,7 +47,7 @@ func (h *UserHandler) Profile(c fiber.Ctx) error {
 	uid := middleware.GetUserID(c)
 	user, err := h.repo.GetByIDFull(uid)
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+		return err
 	}
 	return c.JSON(user)
 }
@@ -57,8 +55,7 @@ func (h *UserHandler) Profile(c fiber.Ctx) error {
 func (h *UserHandler) Create(c fiber.Ctx) error {
 	var req request.CreateUserRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -76,7 +73,7 @@ func (h *UserHandler) Create(c fiber.Ctx) error {
 		user.Role = "Worker"
 	}
 	if err := h.repo.Create(&user); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.Status(201).JSON(response.User{
 		ID:       user.ID,
@@ -99,13 +96,12 @@ func (h *UserHandler) Update(c fiber.Ctx) error {
 
 	user, err := h.repo.GetByIDFull(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+		return err
 	}
 
 	var req request.UpdateUserRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 
 	updates := map[string]interface{}{}
@@ -136,7 +132,7 @@ func (h *UserHandler) Update(c fiber.Ctx) error {
 	}
 
 	if err := h.repo.Update(user, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.JSON(response.User{
 		ID:       user.ID,
@@ -151,7 +147,7 @@ func (h *UserHandler) Update(c fiber.Ctx) error {
 func (h *UserHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

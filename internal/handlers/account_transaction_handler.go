@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -41,7 +39,7 @@ func (h *AccountTransactionHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	txn, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Transaction not found"})
+		return err
 	}
 	return c.JSON(txn)
 }
@@ -49,8 +47,7 @@ func (h *AccountTransactionHandler) Get(c fiber.Ctx) error {
 func (h *AccountTransactionHandler) Create(c fiber.Ctx) error {
 	var req request.CreateAccountTransactionRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	txn := models.AccountTransaction{
 		AccountHeadID:   req.AccountHeadID,
@@ -63,7 +60,7 @@ func (h *AccountTransactionHandler) Create(c fiber.Ctx) error {
 	txn.CreatedBy = middleware.GetUserID(c)
 	txn.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Create(&txn); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(&txn)
 	return c.Status(201).JSON(txn)
@@ -73,12 +70,11 @@ func (h *AccountTransactionHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	txn, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Transaction not found"})
+		return err
 	}
 	var req request.UpdateAccountTransactionRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -99,7 +95,7 @@ func (h *AccountTransactionHandler) Update(c fiber.Ctx) error {
 		updates["description"] = *req.Description
 	}
 	if err := h.repo.Update(txn, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(txn)
 	return c.JSON(txn)
@@ -108,7 +104,7 @@ func (h *AccountTransactionHandler) Update(c fiber.Ctx) error {
 func (h *AccountTransactionHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

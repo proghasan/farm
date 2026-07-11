@@ -1,9 +1,19 @@
 package request
 
-type CreateSpeciesRequest struct {
-	Name string `json:"name" validate:"required,min=1,max=100"`
+type SpeciesRequest struct {
+	Name string
 }
 
-type UpdateSpeciesRequest struct {
-	Name string `json:"name" validate:"required,min=1,max=100"`
+type Rules map[string]string
+
+func SpeciesCreateRules() Rules {
+	return Rules{
+		"name": "required|unique|min:3|max:255",
+	}
+}
+
+func SpeciesUpdateRules() Rules {
+	return Rules{
+		"name": "required|min:3|max:255",
+	}
 }

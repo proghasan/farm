@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -40,7 +38,7 @@ func (h *InventoryItemHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	item, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Item not found"})
+		return err
 	}
 	return c.JSON(item)
 }
@@ -48,8 +46,7 @@ func (h *InventoryItemHandler) Get(c fiber.Ctx) error {
 func (h *InventoryItemHandler) Create(c fiber.Ctx) error {
 	var req request.CreateInventoryItemRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	item := models.InventoryItem{
 		CategoryID:    req.CategoryID,
@@ -62,7 +59,7 @@ func (h *InventoryItemHandler) Create(c fiber.Ctx) error {
 	item.CreatedBy = middleware.GetUserID(c)
 	item.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Create(&item); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(&item)
 	return c.Status(201).JSON(item)
@@ -72,12 +69,11 @@ func (h *InventoryItemHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	item, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Item not found"})
+		return err
 	}
 	var req request.UpdateInventoryItemRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -98,7 +94,7 @@ func (h *InventoryItemHandler) Update(c fiber.Ctx) error {
 		updates["selling_price"] = *req.SellingPrice
 	}
 	if err := h.repo.Update(item, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(item)
 	return c.JSON(item)
@@ -107,7 +103,7 @@ func (h *InventoryItemHandler) Update(c fiber.Ctx) error {
 func (h *InventoryItemHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }

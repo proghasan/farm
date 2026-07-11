@@ -3,6 +3,8 @@ package response
 import (
 	"errors"
 
+	"farm/pkg/validator"
+
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -26,6 +28,15 @@ func ErrorHandler(c fiber.Ctx, err error) error {
 		return c.Status(e.Code).JSON(fiber.Map{
 			"success": false,
 			"message": e.Message,
+		})
+
+	case errors.As(err, new(*validator.ValidationError)):
+		var ve *validator.ValidationError
+		errors.As(err, &ve)
+
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"success": false,
+			"errors":  ve.Errors,
 		})
 
 	default:

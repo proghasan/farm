@@ -6,8 +6,6 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
-	"farm/internal/validator"
-
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -40,7 +38,7 @@ func (h *VaccineHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	vaccine, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Vaccine not found"})
+		return err
 	}
 	return c.JSON(vaccine)
 }
@@ -48,8 +46,7 @@ func (h *VaccineHandler) Get(c fiber.Ctx) error {
 func (h *VaccineHandler) Create(c fiber.Ctx) error {
 	var req request.CreateVaccineRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	vaccine := models.Vaccine{
 		SpeciesID:       req.SpeciesID,
@@ -65,7 +62,7 @@ func (h *VaccineHandler) Create(c fiber.Ctx) error {
 	vaccine.CreatedBy = middleware.GetUserID(c)
 	vaccine.UpdatedBy = middleware.GetUserID(c)
 	if err := h.repo.Create(&vaccine); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(&vaccine)
 	return c.Status(201).JSON(vaccine)
@@ -75,12 +72,11 @@ func (h *VaccineHandler) Update(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	vaccine, err := h.repo.GetByID(uint(id))
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Vaccine not found"})
+		return err
 	}
 	var req request.UpdateVaccineRequest
 	if err := c.Bind().Body(&req); err != nil {
-		validator.HandleBindError(c, err)
-		return nil
+		return err
 	}
 	updates := map[string]interface{}{
 		"updated_by": middleware.GetUserID(c),
@@ -110,7 +106,7 @@ func (h *VaccineHandler) Update(c fiber.Ctx) error {
 		updates["is_repeatable"] = *req.IsRepeatable
 	}
 	if err := h.repo.Update(vaccine, updates); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	h.repo.Preload(vaccine)
 	return c.JSON(vaccine)
@@ -119,7 +115,7 @@ func (h *VaccineHandler) Update(c fiber.Ctx) error {
 func (h *VaccineHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	if err := h.repo.Delete(uint(id)); err != nil {
-		return validator.HandleDBError(c, err)
+		return err
 	}
 	return c.SendStatus(204)
 }
