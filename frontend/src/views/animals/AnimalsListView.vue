@@ -21,7 +21,7 @@ import DateDisplay from "../../components/DateDisplay.vue";
 import AnimalStatusBadge from "../../components/animal/AnimalStatusBadge.vue";
 import { useToast } from "../../composables/useToast";
 import { useHeaderStore } from "../../stores/header";
-import { getErrorMessage } from "../../utils/error";
+import { getFirstErrorMessage } from "../../utils/error";
 
 const router = useRouter();
 const headerStore = useHeaderStore();
@@ -167,7 +167,7 @@ async function save() {
     showModal.value = false;
     await fetchData();
   } catch (e: any) {
-    showError("Failed", getErrorMessage(e));
+    showError("Failed", getFirstErrorMessage(e));
   } finally {
     saving.value = false;
   }
@@ -180,7 +180,7 @@ async function handleDelete(id: number) {
     success("Deleted", "Animal record has been deleted");
     await fetchData();
   } catch (e: any) {
-    showError("Failed", getErrorMessage(e));
+    showError("Failed", getFirstErrorMessage(e));
   }
 }
 
@@ -199,7 +199,7 @@ async function addWeight() {
     showWeightForm.value = false;
     success("Added", "Weight record has been added");
   } catch (e: any) {
-    showError("Failed", getErrorMessage(e));
+    showError("Failed", getFirstErrorMessage(e));
   } finally {
     weightSaving.value = false;
   }
@@ -212,7 +212,7 @@ async function removeWeight(id: number) {
     weightHistories.value = await listWeightHistories();
     success("Deleted", "Weight record has been removed");
   } catch (e: any) {
-    showError("Failed", getErrorMessage(e));
+    showError("Failed", getFirstErrorMessage(e));
   }
 }
 

@@ -8,7 +8,7 @@ import Modal from '../../components/Modal.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
-import { getErrorMessage } from "../../utils/error";
+import { getFirstErrorMessage } from "../../utils/error";
 
 const { success, error: showError } = useToast()
 const headerStore = useHeaderStore()
@@ -117,7 +117,7 @@ async function save() {
     showModal.value = false
     await fetchData()
   } catch (e: any) {
-    showError('Failed', getErrorMessage(e))
+    showError('Failed', getFirstErrorMessage(e))
   } finally {
     saving.value = false
   }
@@ -130,7 +130,7 @@ async function handleDelete(id: number) {
     success('Deleted', 'Vaccine has been deleted')
     await fetchData()
   } catch (e: any) {
-    showError('Failed', getErrorMessage(e))
+    showError('Failed', getFirstErrorMessage(e))
   }
 }
 

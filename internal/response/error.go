@@ -18,7 +18,7 @@ func ErrorHandler(c fiber.Ctx, err error) error {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"message": "Resource not found",
+			"errors":  []string{"Resource not found"},
 		})
 
 	case errors.As(err, new(*fiber.Error)):
@@ -27,7 +27,7 @@ func ErrorHandler(c fiber.Ctx, err error) error {
 
 		return c.Status(e.Code).JSON(fiber.Map{
 			"success": false,
-			"message": e.Message,
+			"errors":  []string{e.Message},
 		})
 
 	case errors.As(err, new(*validator.ValidationError)):
@@ -42,7 +42,7 @@ func ErrorHandler(c fiber.Ctx, err error) error {
 	default:
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"message": "Internal server error",
+			"errors":  []string{"Internal server error"},
 		})
 	}
 }
