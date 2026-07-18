@@ -5,7 +5,7 @@ import "strings"
 func (f *Form) Required(field string, _ ...string) *Form {
 	value, ok := f.data[field]
 
-	if !ok {
+	if !ok || value == nil {
 		f.addError(field, "The "+field+" field is required.")
 		return f
 	}

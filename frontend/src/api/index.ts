@@ -42,6 +42,7 @@ export interface Breed {
   species_id: number
   name: string
   species?: Species
+  user?: User
 }
 
 export interface Animal {
@@ -171,7 +172,7 @@ export const login = (data: AuthPayload) => api.post<LoginResponse>('/auth/login
 export const getProfile = () => api.get<User>('/users/profile').then(r => r.data)
 
 // Species
-export const listSpecies = () => api.get<{ data: Species[] }>('/species').then(r => r.data.data)
+export const listSpecies = (params?: Record<string, any>) => api.get<{ data: Species[] }>('/species', { params }).then(r => r.data.data)
 export const listSpeciesPaginated = (params?: Record<string, any>) => api.get<PaginatedResponse<Species>>('/species', { params }).then(r => r.data)
 export const getSpecies = (id: number) => api.get<Species>(`/species/${id}`).then(r => r.data)
 export const createSpecies = (data: Partial<Species>) => api.post('/species', data)
@@ -179,6 +180,7 @@ export const updateSpecies = (id: number, data: Partial<Species>) => api.put(`/s
 export const deleteSpecies = (id: number) => api.delete(`/species/${id}`)
 
 // Breeds
+export const listBreedsPaginated = (params?: Record<string, any>) => api.get<PaginatedResponse<Breed>>('/breeds', { params }).then(r => r.data)
 export const listBreeds = (params?: Record<string, any>) => api.get<{ data: Breed[] }>('/breeds', { params }).then(r => r.data.data)
 export const createBreed = (data: Partial<Breed>) => api.post('/breeds', data)
 export const updateBreed = (id: number, data: Partial<Breed>) => api.put(`/breeds/${id}`, data)

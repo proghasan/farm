@@ -12,4 +12,5 @@ type Breed struct {
 	UpdatedAt time.Time `json:"updated_at"`
 
 	Species Species `gorm:"foreignKey:SpeciesID" json:"species"`
+	User    User    `gorm:"foreignKey:CreatedBy" json:"user"`
 }

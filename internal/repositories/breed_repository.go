@@ -14,11 +14,11 @@ func NewBreedRepository(db *gorm.DB) *BreedRepository {
 	return &BreedRepository{DB: db}
 }
 
-func (r *BreedRepository) List(speciesID string, page, perPage int) ([]models.Breed, int64, error) {
+func (r *BreedRepository) List(search string, page, perPage int) ([]models.Breed, int64, error) {
 	var breeds []models.Breed
-	tx := r.DB.Model(&models.Breed{}).Preload("Species")
-	if speciesID != "" {
-		tx = tx.Where("species_id = ?", speciesID)
+	tx := r.DB.Model(&models.Breed{}).Preload("Species").Preload("User").Order("id desc")
+	if search != "" {
+		tx = tx.Where("name LIKE ?", "%"+search+"%")
 	}
 	var total int64
 	tx.Count(&total)
@@ -29,7 +29,7 @@ func (r *BreedRepository) List(speciesID string, page, perPage int) ([]models.Br
 
 func (r *BreedRepository) GetByID(id uint) (*models.Breed, error) {
 	var breed models.Breed
-	err := r.DB.Preload("Species").First(&breed, id).Error
+	err := r.DB.Preload("Species").Preload("User").First(&breed, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -40,8 +40,8 @@ func (r *BreedRepository) Create(breed *models.Breed) error {
 	return r.DB.Create(breed).Error
 }
 
-func (r *BreedRepository) Update(breed *models.Breed, updates map[string]interface{}) error {
-	return r.DB.Model(breed).Updates(updates).Error
+func (r *BreedRepository) Update(breed *models.Breed) error {
+	return r.DB.Save(breed).Error
 }
 
 func (r *BreedRepository) Delete(id uint) error {
@@ -49,5 +49,5 @@ func (r *BreedRepository) Delete(id uint) error {
 }
 
 func (r *BreedRepository) Preload(breed *models.Breed) error {
-	return r.DB.Preload("Species").First(breed, breed.ID).Error
+	return r.DB.Preload("Species").Preload("User").First(breed, breed.ID).Error
 }

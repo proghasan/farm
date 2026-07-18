@@ -21,6 +21,14 @@ type SpeciesHandler struct {
 }
 
 func (h *SpeciesHandler) List(c fiber.Ctx) error {
+	if c.Query("all") == "true" {
+		species, err := h.repo.All()
+		if err != nil {
+			return err
+		}
+		return c.JSON(fiber.Map{"data": species})
+	}
+
 	search := c.Query("search")
 	page := fiber.Query[int](c, "page", 1)
 	perPage := fiber.Query[int](c, "per_page", 20)

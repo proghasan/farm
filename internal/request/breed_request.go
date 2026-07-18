@@ -1,11 +1,22 @@
 package request
 
-type CreateBreedRequest struct {
-	SpeciesID uint   `json:"species_id" validate:"required"`
-	Name      string `json:"name" validate:"required,min=1,max=150"`
+import "strconv"
+
+type BreedRequest struct {
+	Name      string `json:"name"`
+	SpeciesID uint   `json:"species_id"`
 }
 
-type UpdateBreedRequest struct {
-	SpeciesID *uint   `json:"species_id"`
-	Name      *string `json:"name" validate:"omitempty,min=1,max=150"`
+func BreedCreateRules() Rules {
+	return Rules{
+		"name":       "required|min:1|max:150|unique:breeds,name",
+		"species_id": "required",
+	}
+}
+
+func BreedUpdateRules(id int) Rules {
+	return Rules{
+		"name":       "required|min:1|max:150|unique:breeds,name," + strconv.Itoa(id),
+		"species_id": "required",
+	}
 }

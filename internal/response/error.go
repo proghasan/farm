@@ -2,6 +2,7 @@ package response
 
 import (
 	"errors"
+	"strings"
 
 	"farm/pkg/validator"
 
@@ -39,10 +40,20 @@ func ErrorHandler(c fiber.Ctx, err error) error {
 			"errors":  ve.Errors,
 		})
 
+	case isForeignKeyError(err):
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"success": false,
+			"errors":  []string{"Cannot delete: resource is in use."},
+		})
+
 	default:
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"errors":  []string{"Internal server error"},
 		})
 	}
+}
+
+func isForeignKeyError(err error) bool {
+	return strings.Contains(err.Error(), "foreign key constraint")
 }
