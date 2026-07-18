@@ -14,6 +14,12 @@ func NewBreedRepository(db *gorm.DB) *BreedRepository {
 	return &BreedRepository{DB: db}
 }
 
+func (r *BreedRepository) All() ([]models.Breed, error) {
+	var breeds []models.Breed
+	err := r.DB.Model(&models.Breed{}).Order("name asc").Find(&breeds).Error
+	return breeds, err
+}
+
 func (r *BreedRepository) List(search string, page, perPage int) ([]models.Breed, int64, error) {
 	var breeds []models.Breed
 	tx := r.DB.Model(&models.Breed{}).Preload("Species").Preload("User").Order("id desc")

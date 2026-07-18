@@ -5,7 +5,6 @@ import (
 	"farm/internal/models"
 	"farm/internal/repositories"
 	"farm/internal/request"
-	"farm/internal/response"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -25,19 +24,12 @@ type WeightHandler struct {
 }
 
 func (h *WeightHandler) List(c fiber.Ctx) error {
-	page := fiber.Query[int](c, "page", 1)
-	perPage := fiber.Query[int](c, "per_page", 20)
-	if perPage < 1 || perPage > 100 {
-		perPage = 20
-	}
 	animalID := c.Query("animal_id")
-	weights, total, err := h.repo.List(animalID, page, perPage)
+	weights, err := h.repo.List(animalID)
 	if err != nil {
 		return err
 	}
-	resp := response.Paginate(page, perPage, total)
-	resp.Data = weights
-	return c.JSON(resp)
+	return c.JSON(weights)
 }
 
 func (h *WeightHandler) Get(c fiber.Ctx) error {
@@ -57,7 +49,7 @@ func (h *WeightHandler) Create(c fiber.Ctx) error {
 	w := models.AnimalWeightHistory{
 		AnimalID:   req.AnimalID,
 		Weight:     req.Weight,
-		RecordDate: req.RecordDate,
+		RecordDate: models.DateString(req.RecordDate),
 		Remarks:    req.Remarks,
 	}
 	w.CreatedBy = middleware.GetUserID(c)
@@ -104,13 +96,35 @@ func (h *WeightHandler) Update(c fiber.Ctx) error {
 	if err := h.repo.Update(w, updates); err != nil {
 		return err
 	}
+
+	if req.Weight != nil {
+		latest, err := h.repo.GetLatestByAnimalID(w.AnimalID)
+		if err == nil && latest.ID == w.ID {
+			h.animalRepo.UpdateCurrentWeight(w.AnimalID, *req.Weight)
+		}
+	}
+
 	return c.JSON(w)
 }
 
 func (h *WeightHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
+
+	w, err := h.repo.GetByID(uint(id))
+	if err != nil {
+		return err
+	}
+
 	if err := h.repo.Delete(uint(id)); err != nil {
 		return err
 	}
+
+	latest, err := h.repo.GetLatestByAnimalID(w.AnimalID)
+	if err != nil {
+		h.animalRepo.UpdateCurrentWeight(w.AnimalID, 0)
+	} else {
+		h.animalRepo.UpdateCurrentWeight(w.AnimalID, latest.Weight)
+	}
+
 	return c.SendStatus(204)
 }

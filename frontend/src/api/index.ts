@@ -49,7 +49,7 @@ export interface Animal {
   id: number
   tag_no: string
   species_id: number
-  breed_id?: number
+  breed_id: number
   father_id?: number
   mother_id?: number
   gender: string
@@ -57,6 +57,7 @@ export interface Animal {
   purchase_date?: string
   purchase_price: number
   current_weight?: number
+  last_vaccine?: string
   color?: string
   status: string
   remarks?: string
@@ -68,6 +69,7 @@ export interface Animal {
   vaccinations?: Vaccination[]
   pregnancies?: Pregnancy[]
   sired_pregnancies?: Pregnancy[]
+  user?: User
 }
 
 export interface Vaccine {
@@ -207,8 +209,9 @@ export const createVaccination = (data: Partial<Vaccination>) => api.post('/vacc
 export const deleteVaccination = (id: number) => api.delete(`/vaccinations/${id}`)
 
 // Weight Histories
-export const listWeightHistories = () => api.get<{ data: WeightHistory[] }>('/weight-histories').then(r => r.data.data)
+export const listWeightHistories = (animalId?: number) => api.get<WeightHistory[]>('/weight-histories', { params: { animal_id: animalId } }).then(r => r.data)
 export const createWeightHistory = (data: Partial<WeightHistory>) => api.post('/weight-histories', data)
+export const updateWeightHistory = (id: number, data: Partial<WeightHistory>) => api.put(`/weight-histories/${id}`, data)
 export const deleteWeightHistory = (id: number) => api.delete(`/weight-histories/${id}`)
 
 // Inventory Categories

@@ -6,6 +6,7 @@ import LoginView from '../views/auth/LoginView.vue'
 import Dashboard from '../views/Dashboard.vue'
 import AnimalsListView from '../views/animals/AnimalsListView.vue'
 import AnimalProfileView from '../views/animals/AnimalProfileView.vue'
+import AnimalFormView from '../views/animals/AnimalFormView.vue'
 import SpeciesListView from '../views/animals/SpeciesListView.vue'
 import BreedsListView from '../views/animals/BreedsListView.vue'
 import VaccinesListView from '../views/animals/VaccinesListView.vue'
@@ -37,6 +38,8 @@ const router = createRouter({
         { path: '', redirect: '/dashboard' },
         { path: 'dashboard', component: Dashboard, meta: { title: 'Dashboard' } },
         { path: 'animals', component: AnimalsListView, meta: { title: 'Animals' } },
+        { path: 'animals/new', component: AnimalFormView, meta: { title: 'Add Animal' } },
+        { path: 'animals/:id/edit', component: AnimalFormView, meta: { title: 'Edit Animal' } },
         { path: 'animals/:id', component: AnimalProfileView, meta: { title: 'Animal Profile' } },
         { path: 'species', component: SpeciesListView, meta: { title: 'Species' } },
         { path: 'breeds', component: BreedsListView, meta: { title: 'Breeds' } },

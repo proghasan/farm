@@ -14,9 +14,12 @@ func NewAnimalRepository(db *gorm.DB) *AnimalRepository {
 	return &AnimalRepository{DB: db}
 }
 
-func (r *AnimalRepository) List(filters map[string]string, page, perPage int) ([]models.Animal, int64, error) {
+func (r *AnimalRepository) List(search string, filters map[string]string, page, perPage int) ([]models.Animal, int64, error) {
 	var animals []models.Animal
-	tx := r.DB.Model(&models.Animal{}).Preload("Species").Preload("Breed")
+	tx := r.DB.Model(&models.Animal{}).Preload("Breed.Species").Preload("User").Order("id desc")
+	if search != "" {
+		tx = tx.Where("tag_no LIKE ? OR color LIKE ?", "%"+search+"%", "%"+search+"%")
+	}
 	if v, ok := filters["species_id"]; ok && v != "" {
 		tx = tx.Where("species_id = ?", v)
 	}
@@ -36,8 +39,8 @@ func (r *AnimalRepository) List(filters map[string]string, page, perPage int) ([
 func (r *AnimalRepository) GetByID(id uint) (*models.Animal, error) {
 	var animal models.Animal
 	err := r.DB.
-		Preload("Species").
-		Preload("Breed").
+		Preload("Breed.Species").
+		Preload("User").
 		Preload("WeightHistories").
 		Preload("AnimalVaccinations.Vaccine").
 		First(&animal, id).Error
@@ -50,8 +53,8 @@ func (r *AnimalRepository) GetByID(id uint) (*models.Animal, error) {
 func (r *AnimalRepository) GetProfile(id uint) (*models.Animal, error) {
 	var animal models.Animal
 	err := r.DB.
-		Preload("Species").
-		Preload("Breed").
+		Preload("Breed.Species").
+		Preload("User").
 		Preload("Father").
 		Preload("Mother").
 		Preload("WeightHistories").
@@ -67,8 +70,8 @@ func (r *AnimalRepository) Create(animal *models.Animal) error {
 	return r.DB.Create(animal).Error
 }
 
-func (r *AnimalRepository) Update(animal *models.Animal, updates map[string]interface{}) error {
-	return r.DB.Model(animal).Updates(updates).Error
+func (r *AnimalRepository) Update(animal *models.Animal) error {
+	return r.DB.Save(animal).Error
 }
 
 func (r *AnimalRepository) Delete(id uint) error {
@@ -76,7 +79,7 @@ func (r *AnimalRepository) Delete(id uint) error {
 }
 
 func (r *AnimalRepository) Preload(animal *models.Animal) error {
-	return r.DB.Preload("Species").Preload("Breed").First(animal, animal.ID).Error
+	return r.DB.Preload("Breed.Species").Preload("User").First(animal, animal.ID).Error
 }
 
 func (r *AnimalRepository) UpdateCurrentWeight(animalID uint, weight float64) error {

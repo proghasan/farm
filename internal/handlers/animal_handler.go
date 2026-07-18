@@ -6,6 +6,8 @@ import (
 	"farm/internal/repositories"
 	"farm/internal/request"
 	"farm/internal/response"
+	"farm/pkg/validator"
+
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -23,6 +25,7 @@ type AnimalHandler struct {
 }
 
 func (h *AnimalHandler) List(c fiber.Ctx) error {
+	search := c.Query("search")
 	page := fiber.Query[int](c, "page", 1)
 	perPage := fiber.Query[int](c, "per_page", 20)
 	if perPage < 1 || perPage > 100 {
@@ -33,7 +36,7 @@ func (h *AnimalHandler) List(c fiber.Ctx) error {
 		"status":     c.Query("status"),
 		"gender":     c.Query("gender"),
 	}
-	animals, total, err := h.repo.List(filters, page, perPage)
+	animals, total, err := h.repo.List(search, filters, page, perPage)
 	if err != nil {
 		return err
 	}
@@ -45,6 +48,7 @@ func (h *AnimalHandler) List(c fiber.Ctx) error {
 func (h *AnimalHandler) Get(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
 	animal, err := h.repo.GetByID(uint(id))
+
 	if err != nil {
 		return err
 	}
@@ -65,10 +69,12 @@ func (h *AnimalHandler) Profile(c fiber.Ctx) error {
 }
 
 func (h *AnimalHandler) Create(c fiber.Ctx) error {
-	var req request.CreateAnimalRequest
-	if err := c.Bind().Body(&req); err != nil {
+	var req request.AnimalRequest
+
+	if err := validator.New(c, h.repo.DB).Rules(request.AnimalCreateRules()).Validate(&req); err != nil {
 		return err
 	}
+
 	animal := models.Animal{
 		TagNo:         req.TagNo,
 		SpeciesID:     req.SpeciesID,
@@ -80,17 +86,20 @@ func (h *AnimalHandler) Create(c fiber.Ctx) error {
 		PurchaseDate:  req.PurchaseDate,
 		PurchasePrice: req.PurchasePrice,
 		CurrentWeight: req.CurrentWeight,
+		LastVaccine:   req.LastVaccine,
 		Color:         req.Color,
 		Status:        models.AnimalStatus(req.Status),
 		Remarks:       req.Remarks,
+		CreatedBy:     middleware.GetUserID(c),
+		UpdatedBy:     middleware.GetUserID(c),
 	}
-	animal.CreatedBy = middleware.GetUserID(c)
-	animal.UpdatedBy = middleware.GetUserID(c)
+
 	if err := h.repo.Create(&animal); err != nil {
 		return err
 	}
+
 	h.repo.Preload(&animal)
-	return c.Status(201).JSON(animal)
+	return c.Status(fiber.StatusCreated).JSON(animal)
 }
 
 func (h *AnimalHandler) Update(c fiber.Ctx) error {
@@ -99,63 +108,46 @@ func (h *AnimalHandler) Update(c fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	var req request.UpdateAnimalRequest
-	if err := c.Bind().Body(&req); err != nil {
+
+	var req request.AnimalRequest
+
+	if err := validator.New(c, h.repo.DB).Rules(request.AnimalUpdateRules(id)).Validate(&req); err != nil {
 		return err
 	}
-	updates := map[string]interface{}{
-		"updated_by": middleware.GetUserID(c),
-	}
-	if req.TagNo != nil {
-		updates["tag_no"] = *req.TagNo
-	}
-	if req.SpeciesID != nil {
-		updates["species_id"] = *req.SpeciesID
-	}
-	if req.BreedID != nil {
-		updates["breed_id"] = *req.BreedID
-	}
-	if req.FatherID != nil {
-		updates["father_id"] = *req.FatherID
-	}
-	if req.MotherID != nil {
-		updates["mother_id"] = *req.MotherID
-	}
-	if req.Gender != nil {
-		updates["gender"] = *req.Gender
-	}
-	if req.BirthDate != nil {
-		updates["birth_date"] = *req.BirthDate
-	}
-	if req.PurchaseDate != nil {
-		updates["purchase_date"] = *req.PurchaseDate
-	}
-	if req.PurchasePrice != nil {
-		updates["purchase_price"] = *req.PurchasePrice
-	}
-	if req.CurrentWeight != nil {
-		updates["current_weight"] = *req.CurrentWeight
-	}
-	if req.Color != nil {
-		updates["color"] = *req.Color
-	}
-	if req.Status != nil {
-		updates["status"] = *req.Status
-	}
-	if req.Remarks != nil {
-		updates["remarks"] = *req.Remarks
-	}
-	if err := h.repo.Update(animal, updates); err != nil {
+
+	animal.TagNo = req.TagNo
+	animal.SpeciesID = req.SpeciesID
+	animal.BreedID = req.BreedID
+	animal.FatherID = req.FatherID
+	animal.MotherID = req.MotherID
+	animal.Gender = req.Gender
+	animal.BirthDate = req.BirthDate
+	animal.PurchaseDate = req.PurchaseDate
+	animal.PurchasePrice = req.PurchasePrice
+	animal.CurrentWeight = req.CurrentWeight
+	animal.LastVaccine = req.LastVaccine
+	animal.Color = req.Color
+	animal.Status = models.AnimalStatus(req.Status)
+	animal.Remarks = req.Remarks
+	animal.UpdatedBy = middleware.GetUserID(c)
+	animal.Species = nil
+	animal.Breed = nil
+	animal.User = models.User{}
+
+	if err := h.repo.Update(animal); err != nil {
 		return err
 	}
+
 	h.repo.Preload(animal)
 	return c.JSON(animal)
 }
 
 func (h *AnimalHandler) Delete(c fiber.Ctx) error {
 	id := fiber.Params[int](c, "id", 0)
+
 	if err := h.repo.Delete(uint(id)); err != nil {
 		return err
 	}
-	return c.SendStatus(204)
+
+	return c.SendStatus(fiber.StatusNoContent)
 }

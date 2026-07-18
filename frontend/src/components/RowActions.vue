@@ -56,6 +56,7 @@ onUnmounted(() => document.removeEventListener("click", close));
   <div ref="containerRef" class="row-actions relative flex" :class="position === 'right' ? 'justify-end' : position === 'center' ? 'justify-center' : 'justify-start'">
     <button
       ref="triggerRef"
+      type="button"
       @click="toggle"
       class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
       :class="open && 'opacity-100 bg-gray-100 text-gray-600'"
