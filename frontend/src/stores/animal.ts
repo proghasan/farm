@@ -19,8 +19,15 @@ export const useAnimalStore = defineStore("animal", () => {
   const page = ref(1);
   const pageSize = ref(20);
   const totalItems = ref(0);
+  const search = ref("");
+
+  let lastParams = "";
 
   async function fetchPaginated(params?: Record<string, any>) {
+    const key = JSON.stringify(params || {});
+    if (key === lastParams && items.value.length) return;
+    lastParams = key;
+
     loading.value = true;
     try {
       const result = await listAnimalsPaginated(params);
@@ -31,6 +38,11 @@ export const useAnimalStore = defineStore("animal", () => {
     } finally {
       loading.value = false;
     }
+  }
+
+  async function refresh(params?: Record<string, any>) {
+    lastParams = "";
+    await fetchPaginated(params);
   }
 
   async function fetchById(id: number) {
@@ -73,7 +85,9 @@ export const useAnimalStore = defineStore("animal", () => {
     page,
     pageSize,
     totalItems,
+    search,
     fetchPaginated,
+    refresh,
     fetchById,
     fetchProfile,
     create,

@@ -16,8 +16,16 @@ export const useSpeciesStore = defineStore("species", () => {
   const page = ref(1);
   const pageSize = ref(20);
   const totalItems = ref(0);
+  const search = ref("");
+
+  let lastPaginatedParams = "";
+  let lastAllParams = "";
 
   async function fetchPaginated(params?: Record<string, any>) {
+    const key = JSON.stringify(params || {});
+    if (key === lastPaginatedParams && items.value.length) return;
+    lastPaginatedParams = key;
+
     loading.value = true;
     try {
       const result = await listSpeciesPaginated(params);
@@ -31,18 +39,28 @@ export const useSpeciesStore = defineStore("species", () => {
   }
 
   async function fetchAll(params?: Record<string, any>) {
+    const key = JSON.stringify(params || {});
+    if (key === lastAllParams && allItems.value.length) return;
+    lastAllParams = key;
+
     allItems.value = await listSpecies(params);
   }
 
   async function create(data: Partial<Species>) {
+    lastPaginatedParams = "";
+    lastAllParams = "";
     await apiCreateSpecies(data);
   }
 
   async function update(id: number, data: Partial<Species>) {
+    lastPaginatedParams = "";
+    lastAllParams = "";
     await apiUpdateSpecies(id, data);
   }
 
   async function remove(id: number) {
+    lastPaginatedParams = "";
+    lastAllParams = "";
     await apiDeleteSpecies(id);
   }
 
@@ -53,6 +71,7 @@ export const useSpeciesStore = defineStore("species", () => {
     page,
     pageSize,
     totalItems,
+    search,
     fetchPaginated,
     fetchAll,
     create,

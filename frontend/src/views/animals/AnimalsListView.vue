@@ -60,7 +60,7 @@ async function handleDelete(id: number) {
   try {
     await animalStore.remove(id);
     success("Deleted", "Animal record has been deleted");
-    await animalStore.fetchPaginated({
+    await animalStore.refresh({
       page: animalStore.page,
       per_page: animalStore.pageSize,
       search: headerStore.searchQuery || undefined,
@@ -70,6 +70,14 @@ async function handleDelete(id: number) {
   }
 }
 
+function doFetch() {
+  animalStore.fetchPaginated({
+    page: animalStore.page,
+    per_page: animalStore.pageSize,
+    search: headerStore.searchQuery || undefined,
+  });
+}
+
 onMounted(() => {
   headerStore.setBreadcrumb([
     { label: "Dashboard", to: "/dashboard" },
@@ -77,11 +85,7 @@ onMounted(() => {
   ]);
   headerStore.setActions([{ label: "Add New", onClick: () => router.push("/animals/new") }]);
   headerStore.setShowSearch(true);
-  animalStore.fetchPaginated({
-    page: animalStore.page,
-    per_page: animalStore.pageSize,
-    search: headerStore.searchQuery || undefined,
-  });
+  doFetch();
 });
 onUnmounted(() => headerStore.clear());
 </script>
@@ -100,8 +104,8 @@ onUnmounted(() => headerStore.clear());
       :total-items="animalStore.totalItems"
       :current-page="animalStore.page"
       :page-size="animalStore.pageSize"
-      @update:current-page="animalStore.page = $event; animalStore.fetchPaginated({ page: animalStore.page, per_page: animalStore.pageSize, search: headerStore.searchQuery || undefined })"
-      @update:page-size="animalStore.pageSize = $event; animalStore.page = 1; animalStore.fetchPaginated({ page: animalStore.page, per_page: animalStore.pageSize, search: headerStore.searchQuery || undefined })"
+      @update:current-page="animalStore.page = $event; doFetch()"
+      @update:page-size="animalStore.pageSize = $event; animalStore.page = 1; doFetch()"
     >
       <template #cell-species_name="{ item }">
         {{ item.breed?.species?.name || "-" }}
