@@ -1,25 +1,23 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getAnimalProfile, deleteWeightHistory } from '../../api'
-import type { Animal, Pregnancy } from '../../api'
+import type { Pregnancy } from '../../api'
 import PageHeader from '../../components/PageHeader.vue'
-import Modal from '../../components/Modal.vue'
 import DateDisplay from '../../components/DateDisplay.vue'
 import { useToast } from '../../composables/useToast'
 import { useHeaderStore } from '../../stores/header'
+import { useAnimalStore } from '../../stores/animal'
+import { useWeightHistoryStore } from '../../stores/weightHistory'
 
 const route = useRoute()
 const router = useRouter()
 const headerStore = useHeaderStore()
+const animalStore = useAnimalStore()
+const weightHistoryStore = useWeightHistoryStore()
 const { success, error: showError } = useToast()
 
-const animal = ref<Animal | null>(null)
 const pregnancies = ref<Pregnancy[]>([])
 const loading = ref(true)
-const showWeightForm = ref(false)
-const weightForm = ref({ weight: 0, record_date: '', remarks: '' })
-const weightSaving = ref(false)
 
 const showTab = ref<'history' | 'vaccinations' | 'pregnancies'>('history')
 
@@ -27,9 +25,8 @@ async function load() {
   loading.value = true
   try {
     const id = Number(route.params.id)
-    const profile = await getAnimalProfile(id)
-    animal.value = profile.animal
-    pregnancies.value = profile.pregnancies
+    await animalStore.fetchProfile(id)
+    pregnancies.value = [...(animalStore.currentPregnancies || [])]
   } finally {
     loading.value = false
   }
@@ -38,10 +35,10 @@ async function load() {
 async function deleteWeight(id: number) {
   if (!confirm('Delete this weight record?')) return
   try {
-    await deleteWeightHistory(id)
-    const profile = await getAnimalProfile(animal.value!.id)
-    animal.value = profile.animal
-    pregnancies.value = profile.pregnancies
+    await weightHistoryStore.remove(id)
+    const animalId = animalStore.currentAnimal!.id
+    await animalStore.fetchProfile(animalId)
+    pregnancies.value = [...(animalStore.currentPregnancies || [])]
     success('Deleted', 'Weight record removed')
   } catch (e: any) {
     showError('Failed', e?.response?.data?.message || 'An error occurred')
@@ -69,11 +66,11 @@ onUnmounted(() => headerStore.clear())
 
 <template>
   <div v-if="loading" class="text-center py-16 text-gray-400">Loading...</div>
-  <div v-else-if="!animal" class="text-center py-16 text-gray-400">Animal not found</div>
+  <div v-else-if="!animalStore.currentAnimal" class="text-center py-16 text-gray-400">Animal not found</div>
   <div v-else class="max-w-4xl">
     <div class="flex items-start justify-between mb-6">
       <div>
-        <PageHeader :title="animal.tag_no" :subtitle="`${animal.breed?.species?.name || ''}${animal.breed ? ' / ' + animal.breed.name : ''}`" />
+        <PageHeader :title="animalStore.currentAnimal.tag_no" :subtitle="`${animalStore.currentAnimal.breed?.species?.name || ''}${animalStore.currentAnimal.breed ? ' / ' + animalStore.currentAnimal.breed.name : ''}`" />
       </div>
       <button @click="router.push('/animals')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Back to List</button>
     </div>
@@ -82,18 +79,18 @@ onUnmounted(() => headerStore.clear())
     <div class="grid grid-cols-3 gap-4 mb-8">
       <div class="bg-white rounded-2xl border border-gray-100 p-5">
         <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Status</p>
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ring-1" :class="statusBadge(animal.status)">
-          <span class="w-1.5 h-1.5 rounded-full" :class="animal.status === 'Active' || animal.status === 'Healthy' ? 'bg-emerald-500' : animal.status === 'Deceased' ? 'bg-red-500' : 'bg-amber-500'" />
-          {{ animal.status }}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ring-1" :class="statusBadge(animalStore.currentAnimal.status)">
+          <span class="w-1.5 h-1.5 rounded-full" :class="animalStore.currentAnimal.status === 'Active' || animalStore.currentAnimal.status === 'Healthy' ? 'bg-emerald-500' : animalStore.currentAnimal.status === 'Deceased' ? 'bg-red-500' : 'bg-amber-500'" />
+          {{ animalStore.currentAnimal.status }}
         </span>
       </div>
       <div class="bg-white rounded-2xl border border-gray-100 p-4">
         <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Gender</p>
-        <p class="text-sm font-semibold text-gray-900">{{ animal.gender }}</p>
+        <p class="text-sm font-semibold text-gray-900">{{ animalStore.currentAnimal.gender }}</p>
       </div>
       <div class="bg-white rounded-2xl border border-gray-100 p-4">
         <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Current Weight</p>
-        <p class="text-sm font-semibold text-gray-900">{{ animal.current_weight ? animal.current_weight + ' kg' : 'Not recorded' }}</p>
+        <p class="text-sm font-semibold text-gray-900">{{ animalStore.currentAnimal.current_weight ? animalStore.currentAnimal.current_weight + ' kg' : 'Not recorded' }}</p>
       </div>
     </div>
 
@@ -101,16 +98,16 @@ onUnmounted(() => headerStore.clear())
     <div class="bg-white rounded-2xl border border-gray-100 p-6 mb-8">
       <h3 class="text-sm font-semibold text-gray-900 mb-4">Details</h3>
       <div class="grid grid-cols-2 gap-x-8 gap-y-3">
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Tag No</span><span class="text-sm font-medium text-gray-900">{{ animal.tag_no }}</span></div>
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Species</span><span class="text-sm font-medium text-gray-900">{{ animal.breed?.species?.name || '-' }}</span></div>
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Breed</span><span class="text-sm font-medium text-gray-900">{{ animal.breed?.name || '-' }}</span></div>
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Birth Date</span><span class="text-sm font-medium text-gray-900"><DateDisplay :value="animal.birth_date" /></span></div>
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Purchase Date</span><span class="text-sm font-medium text-gray-900"><DateDisplay :value="animal.purchase_date" /></span></div>
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Purchase Price</span><span class="text-sm font-medium text-gray-900">${{ Number(animal.purchase_price).toFixed(2) }}</span></div>
-        <div class="flex justify-between"><span class="text-sm text-gray-500">Color</span><span class="text-sm font-medium text-gray-900">{{ animal.color || '-' }}</span></div>
-        <div v-if="animal.father" class="flex justify-between col-span-2"><span class="text-sm text-gray-500">Father</span><span class="text-sm font-medium text-gray-900">{{ animal.father.tag_no }}</span></div>
-        <div v-if="animal.mother" class="flex justify-between col-span-2"><span class="text-sm text-gray-500">Mother</span><span class="text-sm font-medium text-gray-900">{{ animal.mother.tag_no }}</span></div>
-        <div v-if="animal.remarks" class="col-span-2"><span class="text-sm text-gray-500">Remarks</span><p class="text-sm text-gray-900 mt-1">{{ animal.remarks }}</p></div>
+        <div class="flex justify-between"><span class="text-sm text-gray-500">Tag No</span><span class="text-sm font-medium text-gray-900">{{ animalStore.currentAnimal.tag_no }}</span></div>
+        <div class="flex justify-between"><span class="text-sm text-gray-500">Species</span><span class="text-sm font-medium text-gray-900">{{ animalStore.currentAnimal.breed?.species?.name || '-' }}</span></div>
+        <div class="flex justify-between"><span class="text-sm text-gray-500">Breed</span><span class="text-sm font-medium text-gray-900">{{ animalStore.currentAnimal.breed?.name || '-' }}</span></div>
+        <div class="flex justify-between"><span class="text-sm text-gray-500">Birth Date</span><span class="text-sm font-medium text-gray-900"><DateDisplay :value="animalStore.currentAnimal.birth_date" /></span></div>
+        <div class="flex justify-between"><span class="text-sm text-gray-500">Purchase Date</span><span class="text-sm font-medium text-gray-900"><DateDisplay :value="animalStore.currentAnimal.purchase_date" /></span></div>
+        <div class="flex justify-between"><span class="text-sm text-gray-500">Purchase Price</span><span class="text-sm font-medium text-gray-900">${{ Number(animalStore.currentAnimal.purchase_price).toFixed(2) }}</span></div>
+        <div class="flex justify-between"><span class="text-sm text-gray-500">Color</span><span class="text-sm font-medium text-gray-900">{{ animalStore.currentAnimal.color || '-' }}</span></div>
+        <div v-if="animalStore.currentAnimal.father" class="flex justify-between col-span-2"><span class="text-sm text-gray-500">Father</span><span class="text-sm font-medium text-gray-900">{{ animalStore.currentAnimal.father.tag_no }}</span></div>
+        <div v-if="animalStore.currentAnimal.mother" class="flex justify-between col-span-2"><span class="text-sm text-gray-500">Mother</span><span class="text-sm font-medium text-gray-900">{{ animalStore.currentAnimal.mother.tag_no }}</span></div>
+        <div v-if="animalStore.currentAnimal.remarks" class="col-span-2"><span class="text-sm text-gray-500">Remarks</span><p class="text-sm text-gray-900 mt-1">{{ animalStore.currentAnimal.remarks }}</p></div>
       </div>
     </div>
 
@@ -132,8 +129,8 @@ onUnmounted(() => headerStore.clear())
         <table class="w-full text-left text-sm">
           <thead class="border-b bg-gray-50"><tr><th class="px-3 py-2 font-medium text-gray-500 text-xs uppercase">Weight</th><th class="px-3 py-2 font-medium text-gray-500 text-xs uppercase">Date</th><th class="px-3 py-2 font-medium text-gray-500 text-xs uppercase">Remarks</th><th class="px-3 py-2 text-right">Action</th></tr></thead>
           <tbody class="divide-y divide-gray-50">
-            <tr v-if="!animal.weight_histories?.length"><td colspan="4" class="px-3 py-8 text-center text-gray-400">No weight records.</td></tr>
-            <tr v-for="w in animal.weight_histories" :key="w.id">
+            <tr v-if="!animalStore.currentAnimal.weight_histories?.length"><td colspan="4" class="px-3 py-8 text-center text-gray-400">No weight records.</td></tr>
+            <tr v-for="w in animalStore.currentAnimal.weight_histories" :key="w.id">
               <td class="px-3 py-2">{{ w.weight }} kg</td>
               <td class="px-3 py-2"><DateDisplay :value="w.record_date" /></td>
               <td class="px-3 py-2">{{ w.remarks || '-' }}</td>
@@ -151,8 +148,8 @@ onUnmounted(() => headerStore.clear())
         <table class="w-full text-left text-sm">
           <thead class="border-b bg-gray-50"><tr><th class="px-3 py-2 font-medium text-gray-500 text-xs uppercase">Vaccine</th><th class="px-3 py-2 font-medium text-gray-500 text-xs uppercase">Date</th><th class="px-3 py-2 font-medium text-gray-500 text-xs uppercase">Due Date</th><th class="px-3 py-2 font-medium text-gray-500 text-xs uppercase">Doctor</th></tr></thead>
           <tbody class="divide-y divide-gray-50">
-            <tr v-if="!animal.vaccinations?.length"><td colspan="4" class="px-3 py-8 text-center text-gray-400">No vaccination records.</td></tr>
-            <tr v-for="v in animal.vaccinations" :key="v.id">
+            <tr v-if="!animalStore.currentAnimal.vaccinations?.length"><td colspan="4" class="px-3 py-8 text-center text-gray-400">No vaccination records.</td></tr>
+            <tr v-for="v in animalStore.currentAnimal.vaccinations" :key="v.id">
               <td class="px-3 py-2">{{ v.vaccine?.name || '-' }}</td>
               <td class="px-3 py-2"><DateDisplay :value="v.vaccination_date" /></td>
               <td class="px-3 py-2"><DateDisplay :value="v.next_due_date" /></td>

@@ -2,33 +2,28 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { FileText, ShoppingCart, Upload } from "@lucide/vue";
-import {
-  getAnimal,
-  createAnimal,
-  updateAnimal,
-  listSpecies,
-  listBreeds,
-} from "../../api";
-import type { Animal, Species, Breed } from "../../api";
-import Drawer from "../../components/Drawer.vue";
 import PageHeader from "../../components/PageHeader.vue";
 import WeightHistorySection from "./WeightHistorySection.vue";
 import { useToast } from "../../composables/useToast";
 import { useHeaderStore } from "../../stores/header";
+import { useAnimalStore } from "../../stores/animal";
+import { useSpeciesStore } from "../../stores/species";
+import { useBreedStore } from "../../stores/breed";
 import { getFirstErrorMessage } from "../../utils/error";
 
 const route = useRoute();
 const router = useRouter();
 const { success, error: showError } = useToast();
 const headerStore = useHeaderStore();
+const animalStore = useAnimalStore();
+const speciesStore = useSpeciesStore();
+const breedStore = useBreedStore();
 
 const isEdit = computed(() => !!route.params.id);
 const animalId = computed(() => Number(route.params.id));
 
 const saving = ref(false);
 const loading = ref(false);
-const speciesList = ref<Species[]>([]);
-const breedsList = ref<Breed[]>([]);
 
 const form = ref({
   tag_no: "",
@@ -46,23 +41,22 @@ const form = ref({
 });
 
 const filteredBreeds = computed(() =>
-  breedsList.value.filter((b) => b.species_id === form.value.species_id),
+  breedStore.allItems.filter((b) => b.species_id === form.value.species_id),
 );
 
 async function loadSpeciesAndBreeds() {
-  const [species, breeds] = await Promise.all([
-    listSpecies({ all: "true" }),
-    listBreeds({ all: "true" }),
+  await Promise.all([
+    speciesStore.fetchAll({ all: "true" }),
+    breedStore.fetchAll({ all: "true" }),
   ]);
-  speciesList.value = species;
-  breedsList.value = breeds;
 }
 
 async function loadAnimal() {
   if (!isEdit.value) return;
   loading.value = true;
   try {
-    const animal = await getAnimal(animalId.value);
+    await animalStore.fetchById(animalId.value);
+    const animal = animalStore.currentAnimal!;
     form.value = {
       tag_no: animal.tag_no,
       species_id: animal.species_id,
@@ -103,10 +97,10 @@ async function save() {
     if (form.value.last_vaccine) payload.last_vaccine = form.value.last_vaccine;
 
     if (isEdit.value) {
-      await updateAnimal(animalId.value, payload as any);
+      await animalStore.update(animalId.value, payload as any);
       success("Updated", "Animal record has been updated");
     } else {
-      await createAnimal(payload as any);
+      await animalStore.create(payload as any);
       success("Created", "Animal record has been created");
     }
     router.push("/animals");
@@ -182,7 +176,7 @@ onUnmounted(() => headerStore.clear());
                   class="rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all w-full"
                 >
                   <option :value="null" disabled>Select species</option>
-                  <option v-for="s in speciesList" :key="s.id" :value="s.id">
+                  <option v-for="s in speciesStore.allItems" :key="s.id" :value="s.id">
                     {{ s.name }}
                   </option>
                 </select>

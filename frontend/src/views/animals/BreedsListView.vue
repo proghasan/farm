@@ -1,14 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import { watchDebounced } from "@vueuse/core";
-import {
-  listBreedsPaginated,
-  createBreed,
-  updateBreed,
-  deleteBreed,
-  listSpecies,
-} from "../../api";
-import type { Breed, Species } from "../../api";
 import type { Column } from "../../components/DataTable/types";
 import { DataTable } from "../../components/DataTable";
 import RowActions from "../../components/RowActions.vue";
@@ -18,42 +10,28 @@ import DateDisplay from "../../components/DateDisplay.vue";
 import Avatar from "../../components/Avatar.vue";
 import { useToast } from "../../composables/useToast";
 import { useHeaderStore } from "../../stores/header";
+import { useBreedStore } from "../../stores/breed";
+import { useSpeciesStore } from "../../stores/species";
 import { getFirstErrorMessage } from "../../utils/error";
 
 const { success, error: showError } = useToast();
 const headerStore = useHeaderStore();
-const items = ref<(Breed & { created_at?: string })[]>([]);
-const speciesList = ref<Species[]>([]);
-const loading = ref(false);
-const page = ref(1);
-const pageSize = ref(20);
-const totalItems = ref(0);
+const breedStore = useBreedStore();
+const speciesStore = useSpeciesStore();
 const showModal = ref(false);
 const editingId = ref<number | null>(null);
 const form = ref({ name: "", species_id: null as number | null });
 const saving = ref(false);
 
-async function fetchData() {
-  loading.value = true;
-  try {
-    const result = await listBreedsPaginated({
-      page: page.value,
-      per_page: pageSize.value,
-      search: headerStore.searchQuery || undefined,
-    });
-    items.value = result.data as (Breed & { created_at?: string })[];
-    totalItems.value = result.total;
-    speciesList.value = await listSpecies({ all: "true" });
-  } finally {
-    loading.value = false;
-  }
-}
-
 watchDebounced(
   () => headerStore.searchQuery,
   () => {
-    page.value = 1;
-    fetchData();
+    breedStore.page = 1;
+    breedStore.fetchPaginated({
+      page: breedStore.page,
+      per_page: breedStore.pageSize,
+      search: headerStore.searchQuery || undefined,
+    });
   },
   { debounce: 300, maxWait: 1000 },
 );
@@ -65,7 +43,7 @@ function openCreate() {
 }
 
 function openEdit(id: number) {
-  const item = items.value.find((i) => i.id === id);
+  const item = breedStore.items.find((i) => i.id === id);
   if (!item) return;
   editingId.value = id;
   form.value = { name: item.name, species_id: item.species_id };
@@ -80,14 +58,18 @@ async function save() {
       species_id: form.value.species_id!,
     };
     if (editingId.value) {
-      await updateBreed(editingId.value, payload);
+      await breedStore.update(editingId.value, payload);
       success("Updated", "Breed has been updated");
     } else {
-      await createBreed(payload);
+      await breedStore.create(payload);
       success("Created", "Breed has been created");
     }
     showModal.value = false;
-    await fetchData();
+    await breedStore.fetchPaginated({
+      page: breedStore.page,
+      per_page: breedStore.pageSize,
+      search: headerStore.searchQuery || undefined,
+    });
   } catch (e: any) {
     showError("Failed", getFirstErrorMessage(e));
   } finally {
@@ -98,9 +80,13 @@ async function save() {
 async function handleDelete(id: number) {
   if (!confirm("Are you sure you want to delete this breed?")) return;
   try {
-    await deleteBreed(id);
+    await breedStore.remove(id);
     success("Deleted", "Breed has been deleted");
-    await fetchData();
+    await breedStore.fetchPaginated({
+      page: breedStore.page,
+      per_page: breedStore.pageSize,
+      search: headerStore.searchQuery || undefined,
+    });
   } catch (e: any) {
     showError("Failed", getFirstErrorMessage(e));
   }
@@ -141,7 +127,14 @@ onMounted(() => {
   ]);
   headerStore.setActions([{ label: "Add New", onClick: openCreate }]);
   headerStore.setShowSearch(true);
-  fetchData();
+  Promise.all([
+    breedStore.fetchPaginated({
+      page: breedStore.page,
+      per_page: breedStore.pageSize,
+      search: headerStore.searchQuery || undefined,
+    }),
+    speciesStore.fetchAll({ all: "true" }),
+  ]);
 });
 onUnmounted(() => headerStore.clear());
 </script>
@@ -151,20 +144,20 @@ onUnmounted(() => headerStore.clear());
     <PageHeader title="Breeds" subtitle="Manage animal breed records" />
     <DataTable
       :columns="columns"
-      :items="items"
-      :loading="loading"
+      :items="breedStore.items"
+      :loading="breedStore.loading"
       :server-mode="true"
-      :total-items="totalItems"
-      :current-page="page"
-      :page-size="pageSize"
+      :total-items="breedStore.totalItems"
+      :current-page="breedStore.page"
+      :page-size="breedStore.pageSize"
       @update:current-page="
-        page = $event;
-        fetchData();
+        breedStore.page = $event;
+        breedStore.fetchPaginated({ page: breedStore.page, per_page: breedStore.pageSize, search: headerStore.searchQuery || undefined });
       "
       @update:page-size="
-        pageSize = $event;
-        page = 1;
-        fetchData();
+        breedStore.pageSize = $event;
+        breedStore.page = 1;
+        breedStore.fetchPaginated({ page: breedStore.page, per_page: breedStore.pageSize, search: headerStore.searchQuery || undefined });
       "
     >
       <template #cell-species_name="{ item }">
@@ -210,7 +203,7 @@ onUnmounted(() => headerStore.clear());
             class="rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all w-full"
           >
             <option :value="null" disabled>Select species</option>
-            <option v-for="s in speciesList" :key="s.id" :value="s.id">
+            <option v-for="s in speciesStore.allItems" :key="s.id" :value="s.id">
               {{ s.name }}
             </option>
           </select>

@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { watchDebounced } from "@vueuse/core";
-import {
-  listAnimalsPaginated,
-  deleteAnimal,
-} from "../../api";
-import type { Animal } from "../../api";
 import type { Column } from "../../components/DataTable/types";
 import { DataTable } from "../../components/DataTable";
 import RowActions from "../../components/RowActions.vue";
@@ -16,37 +11,23 @@ import Avatar from "../../components/Avatar.vue";
 import AnimalStatusBadge from "../../components/animal/AnimalStatusBadge.vue";
 import { useToast } from "../../composables/useToast";
 import { useHeaderStore } from "../../stores/header";
+import { useAnimalStore } from "../../stores/animal";
 import { getFirstErrorMessage } from "../../utils/error";
 
 const router = useRouter();
 const headerStore = useHeaderStore();
+const animalStore = useAnimalStore();
 const { success, error: showError } = useToast();
-const items = ref<Animal[]>([]);
-const loading = ref(false);
-const page = ref(1);
-const pageSize = ref(20);
-const totalItems = ref(0);
-
-async function fetchData() {
-  loading.value = true;
-  try {
-    const result = await listAnimalsPaginated({
-      page: page.value,
-      per_page: pageSize.value,
-      search: headerStore.searchQuery || undefined,
-    });
-    items.value = result.data;
-    totalItems.value = result.total;
-  } finally {
-    loading.value = false;
-  }
-}
 
 watchDebounced(
   () => headerStore.searchQuery,
   () => {
-    page.value = 1;
-    fetchData();
+    animalStore.page = 1;
+    animalStore.fetchPaginated({
+      page: animalStore.page,
+      per_page: animalStore.pageSize,
+      search: headerStore.searchQuery || undefined,
+    });
   },
   { debounce: 300, maxWait: 1000 },
 );
@@ -77,9 +58,13 @@ const columns: Column[] = [
 async function handleDelete(id: number) {
   if (!confirm("Are you sure you want to delete this animal?")) return;
   try {
-    await deleteAnimal(id);
+    await animalStore.remove(id);
     success("Deleted", "Animal record has been deleted");
-    await fetchData();
+    await animalStore.fetchPaginated({
+      page: animalStore.page,
+      per_page: animalStore.pageSize,
+      search: headerStore.searchQuery || undefined,
+    });
   } catch (e: any) {
     showError("Failed", getFirstErrorMessage(e));
   }
@@ -92,7 +77,11 @@ onMounted(() => {
   ]);
   headerStore.setActions([{ label: "Add New", onClick: () => router.push("/animals/new") }]);
   headerStore.setShowSearch(true);
-  fetchData();
+  animalStore.fetchPaginated({
+    page: animalStore.page,
+    per_page: animalStore.pageSize,
+    search: headerStore.searchQuery || undefined,
+  });
 });
 onUnmounted(() => headerStore.clear());
 </script>
@@ -105,14 +94,14 @@ onUnmounted(() => headerStore.clear());
     />
     <DataTable
       :columns="columns"
-      :items="items"
-      :loading="loading"
+      :items="animalStore.items"
+      :loading="animalStore.loading"
       :server-mode="true"
-      :total-items="totalItems"
-      :current-page="page"
-      :page-size="pageSize"
-      @update:current-page="page = $event; fetchData()"
-      @update:page-size="pageSize = $event; page = 1; fetchData()"
+      :total-items="animalStore.totalItems"
+      :current-page="animalStore.page"
+      :page-size="animalStore.pageSize"
+      @update:current-page="animalStore.page = $event; animalStore.fetchPaginated({ page: animalStore.page, per_page: animalStore.pageSize, search: headerStore.searchQuery || undefined })"
+      @update:page-size="animalStore.pageSize = $event; animalStore.page = 1; animalStore.fetchPaginated({ page: animalStore.page, per_page: animalStore.pageSize, search: headerStore.searchQuery || undefined })"
     >
       <template #cell-species_name="{ item }">
         {{ item.breed?.species?.name || "-" }}

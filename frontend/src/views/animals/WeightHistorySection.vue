@@ -6,14 +6,9 @@ import Drawer from "../../components/Drawer.vue";
 import RowActions from "../../components/RowActions.vue";
 import DateDisplay from "../../components/DateDisplay.vue";
 import { Scale } from "@lucide/vue";
-import {
-  listWeightHistories,
-  createWeightHistory,
-  updateWeightHistory,
-  deleteWeightHistory,
-} from "../../api";
 import type { WeightHistory } from "../../api";
 import { useToast } from "../../composables/useToast";
+import { useWeightHistoryStore } from "../../stores/weightHistory";
 import { getFirstErrorMessage } from "../../utils/error";
 
 const props = defineProps<{
@@ -21,29 +16,29 @@ const props = defineProps<{
 }>();
 
 const { success, error: showError } = useToast();
+const weightHistoryStore = useWeightHistoryStore();
 
-const weightHistories = ref<WeightHistory[]>([]);
 const showWeightForm = ref(false);
 const editingWeightId = ref<number | null>(null);
 const weightSaving = ref(false);
 const weightForm = ref({ weight: 0, record_date: new Date().toISOString().slice(0, 10), remarks: "" });
 
 async function fetchWeights() {
-  weightHistories.value = await listWeightHistories(props.animalId);
+  await weightHistoryStore.fetchByAnimal(props.animalId);
 }
 
 async function addWeight() {
   weightSaving.value = true;
   try {
     if (editingWeightId.value) {
-      await updateWeightHistory(editingWeightId.value, {
+      await weightHistoryStore.update(editingWeightId.value, {
         weight: weightForm.value.weight,
         record_date: weightForm.value.record_date,
         remarks: weightForm.value.remarks || undefined,
       });
       success("Updated", "Weight record has been updated");
     } else {
-      await createWeightHistory({
+      await weightHistoryStore.create({
         animal_id: props.animalId,
         weight: weightForm.value.weight,
         record_date: weightForm.value.record_date,
@@ -65,7 +60,7 @@ async function addWeight() {
 async function removeWeight(id: number) {
   if (!confirm("Delete this weight record?")) return;
   try {
-    await deleteWeightHistory(id);
+    await weightHistoryStore.remove(id);
     await fetchWeights();
     success("Deleted", "Weight record has been removed");
   } catch (e: any) {
@@ -159,8 +154,8 @@ onMounted(() => fetchWeights());
 
       <DataTable
         :columns="columns"
-        :items="weightHistories"
-        :page-size="5"
+        :items="weightHistoryStore.items"
+        hide-pagination
       >
         <template #cell-weight="{ item }">
           <span class="text-sm font-medium text-gray-900">{{ item.weight }} kg</span>

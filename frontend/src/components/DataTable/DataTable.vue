@@ -11,6 +11,7 @@ const props = withDefaults(
     serverMode?: boolean;
     totalItems?: number;
     currentPage?: number;
+    hidePagination?: boolean;
   }>(),
   {
     loading: false,
@@ -18,6 +19,7 @@ const props = withDefaults(
     serverMode: false,
     totalItems: 0,
     currentPage: 1,
+    hidePagination: false,
   },
 );
 
@@ -243,6 +245,7 @@ const displayTo = computed(() =>
     </div>
 
     <div
+      v-if="!hidePagination"
       class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-gray-100"
     >
       <div class="flex items-center gap-3 text-sm text-gray-500">
